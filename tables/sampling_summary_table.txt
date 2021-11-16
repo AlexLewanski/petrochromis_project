@@ -1,0 +1,29 @@
+\begin{table}[!h]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{ccccccc}
+\toprule
+Region & Location letter & Location name & Lat & Lon & P. sp. 'kazumbe' & P. cf. polyodon\\
+\midrule
+ & A & Gombe S & -4.747 & 29.602 & 22 & 6\\
+
+ & B & Katongwe N & -4.803 & 29.603 & 32 & 7\\
+
+ & C & Katongwe S & -4.824 & 29.606 & 22 & 3\\
+
+ & D & S Kagongo & -4.826 & 29.605 & 8 & 5\\
+
+ & E & Kalalangabo & -4.844 & 29.609 & 25 & 7\\
+
+\multirow{-6}{*}{\centering\arraybackslash North} & F & Nondwa & -4.860 & 29.608 & 29 & 4\\
+\cmidrule{1-7}
+ & G & Hilltop & -4.887 & 29.613 & 31 & 4\\
+
+ & H & Bangwe & -4.894 & 29.612 & 1 & 0\\
+
+\multirow{-3}{*}{\centering\arraybackslash Mid} & I & Jakobsen's Beach & -4.910 & 29.598 & 35 & 5\\
+\cmidrule{1-7}
+South & J & Ulombola & -5.011 & 29.769 & 26 & 0\\
+\bottomrule
+\end{tabular}}
+\end{table}

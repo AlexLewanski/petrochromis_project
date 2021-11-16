@@ -1,0 +1,6 @@
+The par_d_stat file included here is an example of the file used for running AdmixTools.
+
+Admixtools was run separately (with different par_d_stat files) for the following D statistics:
+- P1 and P2 are kazumbe populations and P3 is all samples of polyodon
+- P1 and P2 are polyodon populations and P3 is all samples of kazumbe
+- P1 and P2 are populations of one of the species and P3 is the alternative species found at the same location as P2 (the par_d_stat shown here) 

@@ -1,0 +1,7 @@
+DIR:  /project/ltcichlidgenomics/alewansk/Petrochromis_FULLDATASET/DStats/DStats_Admixtools/DStats_9_19_2021/DStats_type_a
+SSS:  out_root
+indivname:    DIR/SSS.ind
+snpname:      DIR/SSS.snp
+genotypename: DIR/SSS.geno
+popfilename:  popfile_TYPEA_colormorphs.txt
+printsd: YES

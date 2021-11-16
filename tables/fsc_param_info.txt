@@ -1,0 +1,23 @@
+\begin{table}[!h]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{cccccc}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } & \multicolumn{2}{c}{Search Range} & \multicolumn{1}{c}{ } \\
+\cmidrule(l{3pt}r{3pt}){4-5}
+Value Type & Parameter & Distribution & Lower & Upper & Bounded\\
+\midrule
+Integer & N\_POP1 & Log-uniform & 10 & 2e6 & No\\
+Integer & N\_POP2 & Log-uniform & 10 & 2e6 & No\\
+Integer & N\_ANC\_POP1 & Log-uniform & 10 & 2e6 & No\\
+Integer & N\_ANC\_POP2 & Log-uniform & 10 & 2e6 & No\\
+Float & RSANC & Log-uniform & 0.1 & 100 & No\\
+\addlinespace
+Integer & TDIV & Uniform & 10 & 2.5e05 & No\\
+Float & MIG & Log-uniform & 1e-06 & 0.001 & No\\
+Float & TPROP & Log-uniform & 1e-04 & 0.5 & No\\
+Float & MIG01 & Log-uniform & 1e-06 & 0.001 & No\\
+Float & MIG10 & Log-uniform & 1e-06 & 0.001 & No\\
+\bottomrule
+\end{tabular}}
+\end{table}

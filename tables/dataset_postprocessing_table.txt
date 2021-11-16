@@ -1,0 +1,15 @@
+\begin{table}[!h]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{cccc}
+\toprule
+Dataset & Sites & Average mean read depth & Mean read depth SD\\
+\midrule
+focaltaxa\_variant\_missing70\_maf1 & 40400 & 16.73 & 12.41\\
+alltaxa\_variant\_missing70\_maf1 & 69409 & 15.70 & 11.71\\
+focaltaxa\_allsites\_missing70\_maf0 & 2782491 & 10.66 & 7.67\\
+mid\_focaltaxa\_allsites\_missing70\_maf0 & 3102141 & 11.05 & 7.57\\
+north\_focaltaxa\_allsites\_missing70\_maf0 & 2620316 & 10.63 & 7.73\\
+\bottomrule
+\end{tabular}}
+\end{table}

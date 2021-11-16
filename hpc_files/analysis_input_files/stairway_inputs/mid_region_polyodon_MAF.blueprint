@@ -1,0 +1,27 @@
+###############################################
+### BLUEPRINT FILE (for Stairway Plot v2.1) ###
+###############################################
+#input setting
+popid: mid_region_polyodon_MAF # id of the population (no white space)
+nseq: 16 # number of sequences
+L: 2877954 # total number of observed nucleic sites, including polymorphic and monomorphic
+whether_folded: true # whether the SFS is folded (true or false)
+SFS:    9577.15686274513 6133.45098039219 4395.69934640526 3343.79084967322 2814.07843137255 2533.35947712419 2487.32679738563 1291 # snp frequency spectrum: number of singleton, number of doubleton, etc. (separated by white space)
+smallest_size_of_SFS_bin_used_for_estimation: 1 # default is 1; to ignore singletons, uncomment this line and change this number to 2
+#largest_size_of_SFS_bin_used_for_estimation: default is nseq/2  # default is nseq/2 for folded SFS
+pct_training: 0.67 # percentage of sites for training
+nrand: 4 7 10 14 # number of random break points for each try (separated by white space)
+project_dir: mid_region_polyodon_MAF # project directory
+stairway_plot_dir: /project/ltcichlidgenomics/alewansk/Petrochromis_FULLDATASET/demographic_mod/stairway_plot/stairway_plot_v2.1.1/stairway_plot_es # directory to the stairway plot files
+ninput: 1000 # number of input files to be created for each estimation
+#random_seed: NONE
+#output setting
+mu: 3.5e-9 # assumed mutation rate per site per generation (.e.g 1.2e-8)
+year_per_generation: 2 # assumed generation time (in years)
+#plot setting
+plot_title: mid_region_polyodon_MAF # title of the plot
+xrange: 0,0 # Time (1k year) range; format: xmin,xmax; 0,0 for default
+yrange: 0,0 # Ne (1k individual) range; format: xmin,xmax; 0,0 for default
+xspacing: 2 # X axis spacing
+yspacing: 2 # Y axis spacing
+fontsize: 12 # Font size

@@ -1,0 +1,13 @@
+\begin{table}[!h]
+\centering
+\begin{tabular}[t]{ccccc}
+\toprule
+\multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{3}{c}{Smooth term} \\
+\cmidrule(l{3pt}r{3pt}){3-5}
+Model formula & $R^{2}_{adj}$ & edf & chi.sq & $P$\\
+\midrule
+polyodon ancestry $\sim$ s(kazumbe abundance) & 0.41 & 2.97 & 258.22 & \textless0.001\\
+kazumbe ancestry $\sim$ s(polyodon abundance) & 0.36 & 1.00 & 17.42 & \textless0.001\\
+\bottomrule
+\end{tabular}
+\end{table}

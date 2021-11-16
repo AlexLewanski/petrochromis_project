@@ -1,0 +1,22 @@
+\begin{table}[!h]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{ccccc}
+\toprule
+Focal species & Outgroup & Topology comparison & Correlation metric & P\\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{5}{l}{\textbf{Evaluating the effect of outgroup identity}}\\
+\hspace{1em}kazumbe & diagramma and green & 1b vs 1b (different outgroups) & 0.927 & 6e-04\\
+\hspace{1em}kazumbe & diagramma and green & 1a vs 1a (different outgroups) & 0.979 & 2e-04\\
+\hspace{1em}polyodon & diagramma and green & 2b vs 2b (different outgroups) & 0.984 & 2e-04\\
+\hspace{1em}polyodon & diagramma and green & 2a vs 2a (different outgroups) & 0.988 & 2e-04\\
+\addlinespace[0.3em]
+\multicolumn{5}{l}{\textbf{Evaluating the effect of samples included in outgroup}}\\
+\hspace{1em}kazumbe & diagramma & 1a vs 1b & 0.957 & 1e-04\\
+\hspace{1em}kazumbe & green & 1a vs 1b & 0.977 & 1e-04\\
+\hspace{1em}polyodon & diagramma & 2a vs 2b & 0.995 & 1e-04\\
+\hspace{1em}polyodon & green & 2a vs 2b & 0.991 & 1e-04\\
+\bottomrule
+\end{tabular}}
+\end{table}

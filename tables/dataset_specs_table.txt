@@ -1,0 +1,15 @@
+\begin{table}[!h]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{ccccccc}
+\toprule
+Dataset & Variant-only & Min quality & MAF & Min mean DP & Max mean DP & Analyses\\
+\midrule
+focaltaxa\_variant\_missing70\_maf1 & true & 20 & 0.01 & 20 & 75 & Fst, popvae, PCA, entropy\\
+alltaxa\_variant\_missing70\_maf1 & true & 20 & 0.01 & 20 & 75 & D statistics\\
+focaltaxa\_allsites\_missing70\_maf0 & false & 20 & 0.00 & 20 & 75 & nucleotide diversity, dxy\\
+mid\_focaltaxa\_allsites\_missing70\_maf0 & false & 20 & 0.00 & 20 & 75 & mid region demographic modeling\\
+north\_focaltaxa\_allsites\_missing70\_maf0 & false & 20 & 0.00 & 20 & 75 & north region demographic modeling\\
+\bottomrule
+\end{tabular}}
+\end{table}

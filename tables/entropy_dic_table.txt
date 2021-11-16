@@ -1,0 +1,14 @@
+\begin{table}[!h]
+\centering
+\begin{tabular}{ccc}
+\toprule
+K & DIC & $\Delta$DIC\\
+\midrule
+1 & 2.10e+07 & 0.00e+00\\
+2 & 2.30e+07 & 1.97e+06\\
+3 & 2.28e+07 & 1.85e+06\\
+4 & 2.32e+10 & 2.32e+10\\
+5 & 2.78e+07 & 6.82e+06\\
+\bottomrule
+\end{tabular}
+\end{table}

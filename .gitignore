@@ -1,0 +1,18 @@
+#main directories and files to ignore
+Barcode_key
+bash_lines_check_run_progress.txt
+rough_draft_scripts
+DStats
+demographic_modelling
+non_vcf_datafiles
+sequencing_summary
+Fish_images
+diversity_divergence_stats
+popvae
+species_lists_and_metadata
+Submission_details
+vcf
+abundance_admixture_relationship
+working_metadata_file
+PCAs
+entropy

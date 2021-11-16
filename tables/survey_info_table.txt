@@ -1,0 +1,29 @@
+\begin{table}[!h]
+\centering
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{ccccccc}
+\toprule
+Species & Location letter & Location name & N & Total area (m\textasciicircum{}2) & Density (total) & Density (avg per year)\\
+\midrule
+ & D & S Kagongo & 42 & 1120 & 0.0375 & 0.0376\\
+
+ & E & Kalalangabo & 91 & 1440 & 0.0632 & 0.0660\\
+
+ & F & Nondwa & 28 & 1632 & 0.0172 & 0.0188\\
+
+ & G & Hilltop & 18 & 1920 & 0.0094 & 0.0094\\
+
+\multirow{-5}{*}{\centering\arraybackslash kazumbe} & I & Jakobsen's Beach & 68 & 1696 & 0.0401 & 0.0393\\
+\cmidrule{1-7}
+ & D & S Kagongo & 40 & 1120 & 0.0357 & 0.0327\\
+
+ & E & Kalalangabo & 22 & 1440 & 0.0153 & 0.0157\\
+
+ & F & Nondwa & 2 & 1632 & 0.0012 & 0.0015\\
+
+ & G & Hilltop & 1 & 1920 & 0.0005 & 0.0005\\
+
+\multirow{-5}{*}{\centering\arraybackslash polyodon} & I & Jakobsen's Beach & 8 & 1696 & 0.0047 & 0.0047\\
+\bottomrule
+\end{tabular}}
+\end{table}

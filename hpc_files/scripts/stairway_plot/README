@@ -1,0 +1,24 @@
+###########################################
+### README FOR STAIRWAY PLOT 2 ANALYSES ###
+###########################################
+
+### DIRECTIONS ###
+These four scripts were used to run Stairway Plot 2 analyses. From a 1D folded SFS in fastsimcoal2 format,
+parse_sfs.R and create_blueprint.sh are used to create the blueprint file used to launch Stairway Plot,
+launch_stairway.sh wraps the input file creation and Stairway Plot running into one script, and top_level_run_stairway.sh
+launches the launch_stairway.sh script to run Stairway Plot on all the datasets (north region polyodon, mid region
+polyodon, north region kazumbe, mid region kazumbe) all at once.
+
+
+### SCRIPT DETAILS ###
+- create_blueprint.sh
+  info: creates the blueprint file for running Stairway Plot 2
+- launch_stairway.sh
+  info: script that wraps parse_sfs.R and create_blueprint.sh to create the input file for Stairway
+        Plot 2 and then launches the Stairway Plot run.
+- parse_sfs.R
+  info: process sfs file (in fastsimcoal2 format) to feed into the create_blueprint.sh script
+- top_level_run_stairway.sh
+  info: the "top level" script that is used to launch the Stairway Plot analyses. It moves the SFS files
+        into a directory, copies the names of the SFS into a file (used for SLURM array in launch_stairway.sh),
+        and then launches launch_stairway.sh to perform Stairway Plot analyses.

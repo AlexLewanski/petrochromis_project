@@ -1,0 +1,135 @@
+#############
+### NOTES ###
+############
+for all file paths that you specify in variables in the scripts, do not include a trailing "/"
+
+
+
+#################################
+### CREATING SFS WITH easySFS ###
+#################################
+-Scripts: process_easySFS_preview.R easySFS_preview.sh run_easySFS_alt.sh
+
+-Description: To create a down-projected SFS from a VCF using easySFS, you can first run the easySFS_preview.sh script, which runs the preview
+option from easySFS to look at the number segregating sites for various project values and then processes this output into a more interpretable
+format using the process_easySFS_preview.R. Once you have identified the projects that you want to use, you can use run_easySFS_alt.sh to create
+the down-projected SFS.
+
+-Directions: To create down-projected SFS from a VCF, use easySFS_preview.sh to identify best down-project and then run run_easySFS_alt.sh
+
+
+
+########################
+### RUNNING FSC MODS ###
+########################
+-Scripts: start_fsc26_mods_NORTH.sh, start_fsc26_mods_MID.sh, run_fsc26_mod.sh, fsc_selectbestrun.sh
+
+-Description: The start_fsc_mods and run_fsc26_mod scripts allow you to launch multiple models at the same time. To launch a series of 
+models, you need to specify the models that you want to run in start_fsc_mods and then submit the start_fsc_mods script, which internally
+calls run_fsc26_mod.sh (which runs each of the specified models). Within each model, the separate runs are performed sequentially, so you
+could get pretty substantial performance gains with respect to time by running the runs in parallel (e.g. SLURM array), which is a future
+improvement I am planning to make. The scripts run each model for a user-specified number of runs and then identifies the best run using
+Joana Meier's fsc_selectbestrun script. 
+
+-Directions: To start the models, run the start_fsc_mods script, which calls run_fsc26_mod internally. 
+At the top of start_fsc_mods, you need to specify the following things:
+1. path to the run_fsc26_mod and fsc_selectbestrun scripts in the "script_directory" variable
+2. path to the analysis directory where the results will be stored in the "analysis_directory" variable
+	NOTE: Do not create the results before running. The script will make the directory and will terminate if the directory already exists.
+              This is a safety measure so you don't accidentally overwrite existing results.
+3. path to directory of the tpl and est files in the "tpl_est_path" variable
+4. whether you want the script to change the sample sizes in the tpl file. If you do want the sample sizes to be changed, specify the "change_sample_sizes"
+to be "YES" and specify the sample sizes as an array in the "sample_size_array" variable with the following structure sample_size_array==( POP0 POP1 POP2 ).
+If you do NOT want the sample sizes to be changed in the tpl file, then specify any other word (e.g. "NO") in the "change_sample_sizes" variable.
+5. the models you want to run can be specified in two ways. First, you can include them on the command line (e.g. sbatch start_fsc26_mods_MID.sh mod1 mod2).
+If you do not include them on the command line, you can include them as an array in the "internal_model_array" variable. I generally specify the models in
+the "internal_model_array" variable because then you can easily go back and re-run the same models.
+	NOTE: The naming of the models in run_fsc26_mod needs to correspond to the names of the tpl and est files. For example, if you have a model called
+	      "geneflow", then you need the tpl file to be named "geneflow.tpl" and the est file to be named "geneflow.est"
+
+At the top of run_fsc26_mod, you need to specify the following	things:
+1. the path to where the fsc program is located. I am currently using fsc26, so you will need to change the fsc program name if you are using a different
+version.
+2. do you want a text file to confirm the number of runs conducted? If yes, specify "YES" in the "confirm_run_num" variable, if no, specify anything but
+"YES" in the "confirm_run_num" variable (e.g. "NO").
+3. Should the run directories be deleted after the best run is identified and extracted? This is implemented primarily as a space-saving measure. If yes, 
+#specify "YES" in the "remove_run_dirs" variable, if no, specify anything but "YES" in the "remove_run_dirs" variable (e.g. "NO").
+4. The number of runs per model you want in the "number_of_runs" variable.
+5. The number of simulations per run that you want in the "number_of_sims" variable.
+NOTE: there are several other relevant parameters to consider when running fastsimcoal2, so you look at the fastsimcoal2 call to check that other details
+are specified as you want (e.g. number of cores, minimum SFS count)
+
+
+
+#######################
+### CALCULATING AIC ###
+#######################
+-Scripts: wrapper_calculateAIC.sh, calculateAIC_alt.sh
+
+-Description: The wrapper_calculateAIC and calculateAIC_alt scripts allow you to calculate AIC and collate other relevant attributes (e.g. likelihood) from
+the best runs of a series of models. To calculate AIC, you need to specify the models you want considered in an array in wrapper_calculateAIC.sh. 
+wrapper_calculateAIC.sh then calls calculateAIC_alt.sh, which is a modified version of Joana Meier's AIC script.
+
+-Directions: To calculate AIC and other model fit attributes, run the wrapper_calculateAIC script, which calls calculateAIC_alt.sh internally.
+1. path to the calculateAIC_alt.sh script in the "script_directory" variable
+2. The path to the top level directory that contains all the directories of each model, which is stored in the "file_path" variable.
+3. an array that specifies all the models that you want the wrapper_calculateAIC script to consider, which is stored in the "mod_list" variable. These model
+names need to match the directory names of the models.
+ 
+
+
+###############################
+### RECOMPUTING LIKELIHOODS ###
+###############################
+-Scripts: fsc26_recompute_likelihoods_v2.sh
+
+-Description: The fsc26_recompute_likelihoods_v2 script recomputes the likelihood for the best runs for a series of models, replicating the approach used
+in Meier et al. (2017) Mol. Ecol. and Bagley et al. (2017) Mol. Ecol. The script has two main functionalities. First, it recomputes the likelihood and stores
+the likelihood values so that you can compare the distributions of likelihood values between models. Second, the script can optionally compile the expected SFS
+produced from the model so that you can compare the expected and observed SFSs to see if the model can recapitulate the observed SFS. When retaining the 
+expected SFS, you can either keep only the SFS that is associated with the highest likelihood value or retain all the expected SFSs. Retaining all the expected
+SFSs allows you to look the variation in the expected SFSs produced by the model. The SFS functionality of this script was developed to reproduce Figs S12 and S14
+in Bagley et al. (2017). I have also written R functions that re-create S12 and S14 in Bagley et al. (2017) using ggplot, and I am very willing to share them if
+they would be useful!
+
+-Directions: To recompute the likelihoods for the best run of one or more models, run the fsc26_recompute_likelihoods_v2 script.
+1. the path to where the fsc program is located (in the "fsc_path" variable). I am currently using fsc26, so you will need to change the fsc program name if you
+are using a different version.
+2. an array that specifies all the models that you want the wrapper_calculateAIC script to consider, which is stored in the "mod_list" variable. These model
+names need to match the directory names of the models. 
+3. The path to the top level directory that contains all the directories of each model, which is stored in the "file_path" variable.
+4. The path where you want the likelihood results directory should be located, which is stored in the "storage_path" variable. The script creates a directory for
+the recomputed likelihoods so no need to make the results directory beforehand.
+5. The number of times you want the likelihood to be recomputed per model, which is stored in the "number_of_iters" variable
+6. The name of the results directory, which is stored in the "likelihood_results_dir" variable.
+7. Do you want the sfs to be retained during the recomputation of the sfs? If yes, specify "yes" in the "collect_sfs" variable. If you don't want the SFS to be 
+retained (you only want the recomputed likelihood values), specify anthing but "yes" in the "collect_sfs" variable.
+8. If you are collecting the SFSs from the recomputations of the likelihood (collect_sfs=yes), do you want all the SFSs to be retained or just the one associated
+with the highest likelihood? If you want all retained specify "yes" in the "retain_all_sfs" variable. Otherwise, specify anything else (e.g. "no") in the 
+"retain_all_sfs" variable.
+NOTE: 
+*The fsc26_recompute_likelihoods_v2 script currently uses 1000000 simulations for recomputing the likelihood. If you want a different number of simulations, you
+will need to change the number of simulations in the fsc program call.
+*THIS SCRIPT WAS BUILT FOR USING A JOINT SFS. IF YOU ARE USING A MULTI-SFS, YOU WILL NEED TO CHANGE ALL THE LABELLING OF THE JOINT SFSs IN SCRIPT (jointMAFpop1_0)
+TO MULTI-SFS (MSFS).
+
+
+
+###########################
+### BLOCK BOOTSTRAPPING ###
+###########################
+-Scripts: bs_dataset_gzip_launcher.sh easy_sfs_array.sh run_single_bootstrap.sh bootstrap_selectbestrun.sh bootstraps_existing_sfs.sh compile_bs_params.sh
+
+-Description: Block bootstrapping involves first creating the block bootstrap SFS by first creating the block bootstrap VCFs and then down-projecting each
+VCF to form the SFS. Dataset creation is performed with bs_dataset_gzip_launcher.sh and easy_sfs_array.sh. Once the datasets are created, model fitting is
+performed on each bootstrap dataset with the bootstraps_existing_sfs.sh script, which internally uses run_single_bootstrap.sh and bootstrap_selectbestrun.sh.
+Once model fitting completed, compile_bs_params.sh is a simple script that compiles the results (parameter values, likelihood values) from the best run of
+each bootstrap
+
+-Script details:
+bs_dataset_gzip_launcher.sh --> creates bs vcfs
+easy_sfs_array.sh --> create SFSs from bootstrapped VCFs
+bootstraps_existing_sfs.sh --> runs bootstrapping (called by user)
+run_single_bootstrap.sh --> runs a single bootstrap job (called by bootstraps_existing_sfs.sh)
+bootstrap_selectbestrun.sh --> selects bootstrap run (called by run_single_bootstrap.sh)
+compile_bs_params.sh --> compiles the results from the best run of each bootstrap dataset

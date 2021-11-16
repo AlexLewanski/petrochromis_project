@@ -1,0 +1,32 @@
+#######################################
+### SCRIPT PROCESSING PROGRESS INFO ###
+#######################################
+
+### FULLY PROCESSED ###
+admixture_abundance_mod.R
+admixtools_input_files_creation.R
+Dstat_input_files_function.R
+d_stat_analysis_and_vis.R
+studysystem_overview_fig.R
+popvae_vis.R
+reich_fst.R
+
+
+### PROCESSING IN PROGRESS ###
+
+
+### PROCESSING NOT STARTED ###
+demographic_mod_plotting.R
+entropy_results_visualization.R
+fsc_plotting_functions.R
+petrochromis_PCA.R
+petrochromis_PCA_example.R
+popgen_stats.R
+sfs_compare_vis_funcs.R
+stairwayplot_vis.R
+summary_tables.R
+
+
+### SUPERFLUOUS SCRIPTS ###
+map_script.R
+sequencing_summary_script.R
