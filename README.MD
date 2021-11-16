@@ -43,7 +43,7 @@ petrochromis_project
 The figures in the main text and supplementary materials of the manuscript
 
 ### `hpc_files`
-The scripts and input files used for processing analysis on the computing cluster.
+The scripts and input files used for processing and analysis on the University of Wyoming's [Teton computing cluster](https://www.uwyo.edu/arcc/resources/high-performance-computing/).
 
 ### `project_scripts`
 The scripts for analysis, processing, and generation of the figures and tables. All scripts in this directory were used on my local computer.
