@@ -17,3 +17,6 @@ working_metadata_file
 PCAs
 entropy
 .DS_Store
+zipped_directories_zenodo
+NCBI_info
+project_scripts/.Rhistory

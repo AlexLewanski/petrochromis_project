@@ -4,23 +4,23 @@
 ###          allele sharing between different populations of kazumbe (1a and 1b) and between
 ###          different populations of polyodon (2a and 2b)
 ### PRODUCTS:
-###     dstat_matrix_plot_typea_outgroup_diagramma_9_19_2021.png: visualization for D stats 
-###                                    with the following setups using Simochromis
+###     dstat_matrix_plot_typea_outgroup_diagramma_9_19_2021_REARRANGE.png: visualization for
+###                                    D stats with the following setups using Simochromis
 ###                                    diagramma as the outgroup:
 ###                                    1b: kazumbe_pop1, kazumbe_pop2, polyodon_pop2;
 ###                                    2b: polyodon_pop1, polyodon_pop2, kazumbe_pop2
-###     dstat_matrix_plot_typea_outgroup_green_9_19_2021.png: visualization for D stats 
-###                                    with the following setups using Petrochromis
+###     dstat_matrix_plot_typea_outgroup_green_9_19_2021_REARRANGE.png: visualization for D
+###                                    stats with the following setups using Petrochromis
 ###                                    green as the outgroup:
 ###                                    1b: kazumbe_pop1, kazumbe_pop2, polyodon_pop2;
 ###                                    2b: polyodon_pop1, polyodon_pop2, kazumbe_pop2
-###     dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021.png: visualization for D stats 
-###                                    with the following setups using Simochromis
+###     dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE.png: visualization for
+###                                    D stats with the following setups using Simochromis
 ###                                    diagramma as the outgroup:
 ###                                    1a: kazumbe_pop1, kazumbe_pop2, polyodon_all
 ###                                    2a: polyodon_pop1, polyodon_pop2, kazumbe_all
-###     dstat_matrix_plot_typeb_outgroup_green_9_19_2021.png: visualization for D stats 
-###                                    with the following setups using Petrochromis
+###     dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE.png: visualization for D 
+###                                    stats with the following setups using Petrochromis
 ###                                    green as the outgroup:
 ###                                    1a: kazumbe_pop1, kazumbe_pop2, polyodon_all
 ###                                    2a: polyodon_pop1, polyodon_pop2, kazumbe_all
@@ -407,11 +407,12 @@ polyodon_corrplot_title <- expression(paste(italic("P"), ". cf. ",  italic("poly
 title_list <- list(kazumbe = kazumbe_corrplot_title,
                    polyodon = polyodon_corrplot_title)
 
-tip_label_list_typea <- list(kazumbe = c('Pk[pop1]', 'Pk[pop2]', 'Pp[full]', 'O'),
-                             polyodon = c('Pp[pop1]', 'Pp[pop2]', 'Pk[full]', 'O'))
+#to add spaces, use ~~
+tip_label_list_typea <- list(kazumbe = c('P1: Pk[pop1]', 'P2: Pk[pop2]', 'P3: Pp[full]', 'Outgroup'),
+                             polyodon = c('P1: Pp[pop1]', 'P2: Pp[pop2]', 'P3: Pk[full]', 'Outgroup'))
 
-tip_label_list_typeb <- list(kazumbe = c('Pk[pop1]', 'Pk[pop2]', 'Pp[pop2]', 'O'),
-                             polyodon = c('Pp[pop1]', 'Pp[pop2]', 'Pk[pop2]', 'O'))
+tip_label_list_typeb <- list(kazumbe = c('P1: Pk[pop1]', 'P2: Pk[pop2]', 'P3: Pp[pop2]', 'Outgroup'),
+                             polyodon = c('P1: Pp[pop1]', 'P2: Pp[pop2]', 'P3: Pk[pop2]', 'Outgroup'))
 
 tree_plot_legend_list_typea <- list()
 tree_plot_legend_list_typeb <- list()
@@ -427,7 +428,7 @@ for (i in c('polyodon', 'kazumbe')) {
                                 y = 33),
               aes(x = x, y = y),
               label = tip_label_list_typea[[i]],
-              size = 5.5, parse = TRUE) +
+              size = 5, parse = TRUE) + #size originally 5
     geom_segment(data = data.frame(x_start = c(25/3, 55/3, 10/3, 50/3),
                                    y_start = c(80/3, 80/3, 70/3, 70/3),
                                    x_end =   c(55/3, 25/3, 50/3, 10/3),
@@ -450,7 +451,7 @@ for (i in c('polyodon', 'kazumbe')) {
                                 y = 33),
               aes(x = x, y = y),
               label = tip_label_list_typeb[[i]],
-              size = 5.5, parse = TRUE) +
+              size = 5, parse = TRUE) + #size originally 5.5
     geom_segment(data = data.frame(x_start = c(25/3, 55/3, 10/3, 50/3),
                                    y_start = c(80/3, 80/3, 70/3, 70/3),
                                    x_end =   c(55/3, 25/3, 50/3, 10/3),
@@ -467,10 +468,7 @@ for (i in c('polyodon', 'kazumbe')) {
 }
 
 
-
-
-
-### type a legend ###
+### creating legends ###
 tree_multipanel_typea <- plot_grid(tree_plot_legend_list_typea$kazumbe, empty_plot, tree_plot_legend_list_typea$polyodon, 
                                    nrow = 3, rel_heights = c(0.45, 0.08, 0.45))
 
@@ -490,29 +488,28 @@ right_legend <- plot_grid(empty_plot,
           rel_heights = c(0.05, 0.85, 0.2, 0.1)) + theme(plot.margin = margin(0, 0, 0, 5))
 
 
-
 #type a with S. diagramma outgroup
 plot_grid(plot_grid(empty_plot, tree_multipanel_typeb, empty_plot, nrow = 3, rel_heights = c(0.08, 0.8, 0.08)), 
           plot_grid(full_plot_list$type_a$diagramma$kazumbe, 
                     full_plot_list$type_a$diagramma$polyodon, 
                     nrow = 1, labels = c("(b)", "(c)"), label_size = 26, vjust = 1), right_legend, 
-          ncol = 3, rel_widths = c(0.2, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
+          ncol = 3, rel_widths = c(0.25, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
 ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_diagramma_9_19_2021_REARRANGE.png'), 
         width = 19*1.1, height = 8*1.1, bg = 'white')
+
 
 #type a with P. green outgroup
 plot_grid(plot_grid(empty_plot, tree_multipanel_typeb, empty_plot, nrow = 3, rel_heights = c(0.08, 0.8, 0.08)), 
           plot_grid(full_plot_list$type_a$green$kazumbe, 
                     full_plot_list$type_a$green$polyodon, 
                     nrow = 1, labels = c("(b)", "(c)"), label_size = 26, vjust = 1), right_legend, 
-          ncol = 3, rel_widths = c(0.2, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
+          ncol = 3, rel_widths = c(0.25, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
 ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_green_9_19_2021_REARRANGE.png'), 
         width = 19*1.1, height = 8*1.1, bg = 'white')
-
 
 
 #type b with S. diagramma outgroup
@@ -520,10 +517,10 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel
           plot_grid(full_plot_list$type_b$diagramma$kazumbe, 
                     full_plot_list$type_b$diagramma$polyodon, 
                     nrow = 1, labels = c("(b)", "(c)"), label_size = 26, vjust = 1), right_legend, 
-          ncol = 3, rel_widths = c(0.2, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
+          ncol = 3, rel_widths = c(0.25, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
-ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE.png.png'), 
+ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE.png'), 
         width = 19*1.1, height = 8*1.1, bg = 'white')
 
 
@@ -532,170 +529,11 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel
           plot_grid(full_plot_list$type_b$green$kazumbe, 
                     full_plot_list$type_b$green$polyodon, 
                     nrow = 1, labels = c("(b)", "(c)"), label_size = 26, vjust = 1), right_legend, 
-          ncol = 3, rel_widths = c(0.2, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
+          ncol = 3, rel_widths = c(0.25, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
-ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE.png.png'), 
+ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE.png'), 
         width = 19*1.1, height = 8*1.1, bg = 'white')
-
-
-
-
-# full_legend_vertical_updated_typea  <- plot_grid(empty_plot,
-#                                                  pos_neg_plus_tree_typea,
-#                                                  plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.25, 0.6, 0.25), ncol = 3),
-#                                                  empty_plot, rel_heights = c(0.05, 0.85, 0.2, 0.05), ncol = 1)
-
-
-
-
-
-### type b legend ###
-tree_multipanel_typeb <- plot_grid(tree_plot_legend_list_typeb$kazumbe, empty_plot, tree_plot_legend_list_typeb$polyodon, 
-                                   nrow = 3, rel_heights = c(0.45, 0.05, 0.45))
-
-pos_neg_plus_tree_typeb <- plot_grid(plot_grid(empty_plot, pos_neg_legend_vertical, empty_plot, 
-                                               rel_heights = c(0.2, 0.6, 0.15), ncol = 1), 
-                                     tree_multipanel_typeb, ncol = 2, rel_widths = c(0.32, 0.73))
-
-
-full_legend_vertical_updated_typeb  <- plot_grid(empty_plot,
-                                                 pos_neg_plus_tree_typeb,
-                                                 plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.25, 0.6, 0.25), ncol = 3),
-                                                 empty_plot, rel_heights = c(0.05, 0.85, 0.2, 0.05), ncol = 1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### type a legend ###
-tree_multipanel_typea <- plot_grid(tree_plot_legend_list_typea$kazumbe, empty_plot, tree_plot_legend_list_typea$polyodon, 
-                                   nrow = 3, rel_heights = c(0.45, 0.05, 0.45))
-
-pos_neg_plus_tree_typea <- plot_grid(plot_grid(empty_plot, pos_neg_legend_vertical, empty_plot, 
-                                               rel_heights = c(0.2, 0.6, 0.15), ncol = 1), 
-                                     tree_multipanel_typea, ncol = 2, rel_widths = c(0.32, 0.73))
-
-
-full_legend_vertical_updated_typea  <- plot_grid(empty_plot,
-                                                 pos_neg_plus_tree_typea,
-                                                 plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.25, 0.6, 0.25), ncol = 3),
-                                                 empty_plot, rel_heights = c(0.05, 0.85, 0.2, 0.05), ncol = 1)
-
-
-### type b legend ###
-tree_multipanel_typeb <- plot_grid(tree_plot_legend_list_typeb$kazumbe, empty_plot, tree_plot_legend_list_typeb$polyodon, 
-                                   nrow = 3, rel_heights = c(0.45, 0.05, 0.45))
-
-pos_neg_plus_tree_typeb <- plot_grid(plot_grid(empty_plot, pos_neg_legend_vertical, empty_plot, 
-                                               rel_heights = c(0.2, 0.6, 0.15), ncol = 1), 
-                                     tree_multipanel_typeb, ncol = 2, rel_widths = c(0.32, 0.73))
-
-
-full_legend_vertical_updated_typeb  <- plot_grid(empty_plot,
-                                                 pos_neg_plus_tree_typeb,
-                                                 plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.25, 0.6, 0.25), ncol = 3),
-                                                 empty_plot, rel_heights = c(0.05, 0.85, 0.2, 0.05), ncol = 1)
-
-
-### 3b: CREATE FINAL ADMIXTOOLS MULTIPANEL PLOTS AND EXPORTING FINAL PLOTS ###
-#type a with S. diagramma outgroup
-plot_grid(plot_grid(full_plot_list$type_a$diagramma$kazumbe, 
-                    full_plot_list$type_a$diagramma$polyodon, 
-                    nrow = 1, labels = c("(a)", "(b)"), label_size = 26, vjust = 1) +
-            theme(plot.margin = margin(4, 0, 0, 0)), full_legend_vertical_updated_typeb, 
-          ncol = 2, rel_widths = c(0.76, 0.24))
-
-ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_diagramma_9_19_2021.png'), 
-        width = 18*1.1, height = 8*1.1, bg = 'white')
-
-#type a with P. green outgroup
-plot_grid(plot_grid(full_plot_list$type_a$green$kazumbe, 
-                    full_plot_list$type_a$green$polyodon, 
-                    nrow = 1, labels = c("(a)", "(b)"), label_size = 26, vjust = 1) +
-            theme(plot.margin = margin(4, 0, 0, 0)), 
-          full_legend_vertical_updated_typeb, 
-          ncol = 2, rel_widths = c(0.76, 0.24))
-
-ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_green_9_19_2021.png'), 
-        width = 18*1.1, height = 8*1.1, bg = 'white')
-
-
-#type b with S. diagramma outgroup
-plot_grid(plot_grid(full_plot_list$type_b$diagramma$kazumbe, 
-                    full_plot_list$type_b$diagramma$polyodon, 
-                    nrow = 1, labels = c("(a)", "(b)"), label_size = 26, vjust = 1) +
-            theme(plot.margin = margin(4, 0, 0, 0)), full_legend_vertical_updated_typea, 
-          ncol = 2, rel_widths = c(0.76, 0.24))
-
-ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021.png'), 
-        width = 18*1.1, height = 8*1.1, bg = 'white')
-
-
-#type a with P. green outgroup
-plot_grid(plot_grid(full_plot_list$type_b$green$kazumbe, 
-                    full_plot_list$type_b$green$polyodon, 
-                    nrow = 1, labels = c("(a)", "(b)"), label_size = 26, vjust = 1) +
-            theme(plot.margin = margin(4, 0, 0, 0)), full_legend_vertical_updated_typea, 
-          ncol = 2, rel_widths = c(0.76, 0.24))
-
-ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021.png'), 
-        width = 18*1.1, height = 8*1.1, bg = 'white')
 
 
 
@@ -962,6 +800,106 @@ cat(mantel_test_table_final, file = here('tables', 'dstat_mantel_test_table.txt'
 ################################################################
 ### 6. MISCELLANEOUS (CODE THAT IS CURRENTLY NOT BEING USED) ###
 ################################################################
+
+### ALTERNATIVE PLOT SET-UP ###
+# ### type a legend ###
+# tree_multipanel_typea <- plot_grid(tree_plot_legend_list_typea$kazumbe, empty_plot, tree_plot_legend_list_typea$polyodon, 
+#                                    nrow = 3, rel_heights = c(0.45, 0.05, 0.45))
+# 
+# pos_neg_plus_tree_typea <- plot_grid(plot_grid(empty_plot, pos_neg_legend_vertical, empty_plot, 
+#                                                rel_heights = c(0.2, 0.6, 0.15), ncol = 1), 
+#                                      tree_multipanel_typea, ncol = 2, rel_widths = c(0.32, 0.73))
+# 
+# 
+# full_legend_vertical_updated_typea  <- plot_grid(empty_plot,
+#                                                  pos_neg_plus_tree_typea,
+#                                                  plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.25, 0.6, 0.25), ncol = 3),
+#                                                  empty_plot, rel_heights = c(0.05, 0.85, 0.2, 0.05), ncol = 1)
+# 
+# 
+# ### type b legend ###
+# tree_multipanel_typeb <- plot_grid(tree_plot_legend_list_typeb$kazumbe, empty_plot, tree_plot_legend_list_typeb$polyodon, 
+#                                    nrow = 3, rel_heights = c(0.45, 0.05, 0.45))
+# 
+# pos_neg_plus_tree_typeb <- plot_grid(plot_grid(empty_plot, pos_neg_legend_vertical, empty_plot, 
+#                                                rel_heights = c(0.2, 0.6, 0.15), ncol = 1), 
+#                                      tree_multipanel_typeb, ncol = 2, rel_widths = c(0.32, 0.73))
+# 
+# 
+# full_legend_vertical_updated_typeb  <- plot_grid(empty_plot,
+#                                                  pos_neg_plus_tree_typeb,
+#                                                  plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.25, 0.6, 0.25), ncol = 3),
+#                                                  empty_plot, rel_heights = c(0.05, 0.85, 0.2, 0.05), ncol = 1)
+# 
+# 
+# ### 3b: CREATE FINAL ADMIXTOOLS MULTIPANEL PLOTS AND EXPORTING FINAL PLOTS ###
+# #type a with S. diagramma outgroup
+# plot_grid(plot_grid(full_plot_list$type_a$diagramma$kazumbe, 
+#                     full_plot_list$type_a$diagramma$polyodon, 
+#                     nrow = 1, labels = c("(a)", "(b)"), label_size = 26, vjust = 1) +
+#             theme(plot.margin = margin(4, 0, 0, 0)), full_legend_vertical_updated_typeb, 
+#           ncol = 2, rel_widths = c(0.76, 0.24))
+# 
+# ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_diagramma_9_19_2021.png'), 
+#         width = 18*1.1, height = 8*1.1, bg = 'white')
+# 
+# #type a with P. green outgroup
+# plot_grid(plot_grid(full_plot_list$type_a$green$kazumbe, 
+#                     full_plot_list$type_a$green$polyodon, 
+#                     nrow = 1, labels = c("(a)", "(b)"), label_size = 26, vjust = 1) +
+#             theme(plot.margin = margin(4, 0, 0, 0)), 
+#           full_legend_vertical_updated_typeb, 
+#           ncol = 2, rel_widths = c(0.76, 0.24))
+# 
+# ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_green_9_19_2021.png'), 
+#         width = 18*1.1, height = 8*1.1, bg = 'white')
+# 
+# 
+# #type b with S. diagramma outgroup
+# plot_grid(plot_grid(full_plot_list$type_b$diagramma$kazumbe, 
+#                     full_plot_list$type_b$diagramma$polyodon, 
+#                     nrow = 1, labels = c("(a)", "(b)"), label_size = 26, vjust = 1) +
+#             theme(plot.margin = margin(4, 0, 0, 0)), full_legend_vertical_updated_typea, 
+#           ncol = 2, rel_widths = c(0.76, 0.24))
+# 
+# ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021.png'), 
+#         width = 18*1.1, height = 8*1.1, bg = 'white')
+# 
+# 
+# #type a with P. green outgroup
+# plot_grid(plot_grid(full_plot_list$type_b$green$kazumbe, 
+#                     full_plot_list$type_b$green$polyodon, 
+#                     nrow = 1, labels = c("(a)", "(b)"), label_size = 26, vjust = 1) +
+#             theme(plot.margin = margin(4, 0, 0, 0)), full_legend_vertical_updated_typea, 
+#           ncol = 2, rel_widths = c(0.76, 0.24))
+# 
+# ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021.png'), 
+#         width = 18*1.1, height = 8*1.1, bg = 'white')
+
+# full_legend_vertical_updated_typea  <- plot_grid(empty_plot,
+#                                                  pos_neg_plus_tree_typea,
+#                                                  plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.25, 0.6, 0.25), ncol = 3),
+#                                                  empty_plot, rel_heights = c(0.05, 0.85, 0.2, 0.05), ncol = 1)
+
+
+# ### type b legend ###
+# tree_multipanel_typeb <- plot_grid(tree_plot_legend_list_typeb$kazumbe, empty_plot, tree_plot_legend_list_typeb$polyodon, 
+#                                    nrow = 3, rel_heights = c(0.45, 0.05, 0.45))
+# 
+# pos_neg_plus_tree_typeb <- plot_grid(plot_grid(empty_plot, pos_neg_legend_vertical, empty_plot, 
+#                                                rel_heights = c(0.2, 0.6, 0.15), ncol = 1), 
+#                                      tree_multipanel_typeb, ncol = 2, rel_widths = c(0.32, 0.73))
+# 
+# 
+# full_legend_vertical_updated_typeb  <- plot_grid(empty_plot,
+#                                                  pos_neg_plus_tree_typeb,
+#                                                  plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.25, 0.6, 0.25), ncol = 3),
+#                                                  empty_plot, rel_heights = c(0.05, 0.85, 0.2, 0.05), ncol = 1)
+
+
+
+
+
 
 ### BARPLOTS FOR TYPE A ###
 
