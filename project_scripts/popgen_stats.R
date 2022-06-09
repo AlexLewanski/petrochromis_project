@@ -58,7 +58,7 @@ library(here)
 
 
 ### Analytical decisions ###
-number_of_bootstraps <- 5 #number of bootstraps to use for calculating confidence intervals
+number_of_bootstraps <- 500 #number of bootstraps to use for calculating confidence intervals
 
 ### Custom functions ###
 
@@ -595,6 +595,93 @@ intraspecific_fst_df %>%
   summarize(max = max(Fst),
             min = min(Fst)) %>% 
   as.data.frame()
+
+
+
+###################################
+### SUMMARY TABLE OF STATISTICS ###
+###################################
+
+library(tidyverse)
+library(here)
+
+number_of_bootstraps <- 500
+
+pi_list_kazumbe_subset <- list()
+
+### load full dataset diversity estimates for subset kazumbe ###
+full_species_kazumbe_subset_file_names <- list.files(here('diversity_divergence_stats', 'pixy', 'results', 'fullspecies_subset_kazumbe'), full.names = TRUE)
+full_species_kazumbe_subset_file_names <- full_species_kazumbe_subset_file_names[grepl(pattern = 'pi.txt$', x = full_species_kazumbe_subset_file_names)]
+pi_list_kazumbe_subset[['full_species']] <- lapply(split(full_species_kazumbe_subset_file_names, gsub(".txt", "", basename(full_species_kazumbe_subset_file_names) )), read.delim)
+
+### load location-level dataset diversity estimates for subset kazumbe ###
+location_kazumbe_subset_file_names <- list.files(here('diversity_divergence_stats', 'pixy', 'results', 'pop_subset_kazumbe'), full.names = TRUE)
+pi_list_kazumbe_subset[['location']] <- lapply(split(location_kazumbe_subset_file_names, gsub(".txt", "", basename(location_kazumbe_subset_file_names) )), read.delim)
+
+
+### initial processing of nuc. div. data (remove the calculations that are being ignored)
+pi_list_kazumbe_subset_processed <- lapply(pi_list_kazumbe_subset, function(sub_list) {
+  lapply(sub_list, function(x) x[x$pop != 'ignore',])
+})
+
+
+
+pi_bootstrap_full_list <- list()
+for (calc_type in names(pi_list_kazumbe_subset_processed)) {
+  for (replicate in names(pi_list_kazumbe_subset_processed[[calc_type]])) {
+    
+    replicate_label <- paste0('replicate_', gsub('^.*SUBSAMP_([0-9]+)_pi', '\\1', replicate ))
+    
+    pi_bootstrap_list <- list()
+    pi_bootstrap_process_list <- list()
+    for (taxa in unique(pi_list_kazumbe_subset_processed[[calc_type]][[replicate]]$pop)) {
+      pi_bootstrap_list[[taxa]] <- conduct_bootstrap(dataset = pi_list_kazumbe_subset_processed[[calc_type]][[replicate]][which(pi_list_kazumbe_subset_processed[[calc_type]][[replicate]]$pop == taxa),], bootstrap_number = 15)
+      pi_bootstrap_list[[taxa]]$pop <- taxa
+      
+      pi_bootstrap_process_list[[taxa]] <- quantile(pi_bootstrap_list[[taxa]]$val, probs = c(0.025, 0.975))
+      
+      message('finished calculations for ', taxa)
+    }
+    
+    pi_bootstrap_full_list[[calc_type]][[replicate]] <- pi_list_kazumbe_subset_processed[[calc_type]][[replicate]] %>% 
+      group_by(pop) %>%
+      summarize(mean = diversity_calc_alt(calc_type = c('raw', 'per_site')[1],
+                                          no_sites_col = no_sites,
+                                          count_diffs_col = count_diffs,
+                                          count_comparisons_col = count_comparisons), .groups = 'drop') %>% 
+      merge(., do.call(rbind, pi_bootstrap_process_list), by.x = 'pop', by.y = 0) %>% 
+      rename(lower = "2.5%",
+             upper = "97.5%") %>% 
+      mutate(population = factor(case_when(str_detect(pop, '_') ~ str_remove(pop, '[A-Za-z]+_'),
+                                           str_detect(pop, '^[A-Za-z]+$') ~ 'full'),
+                                 levels = rev(c('Gombe_South', 'Katongwe_N', 'Katongwe_S', 'Ska', 'Kalala', 'Nondwa', 'Hilltop', 'Bangwe', 'Jakob', 'Ulombola', 'full'))),
+             species = case_when(str_detect(pop, '_') ~ str_remove(pop, '_[A-Za-z]+.*'),
+                                 str_detect(pop, '^[A-Za-z]+$') ~ pop),
+             Population = factor(case_when(population == 'Gombe_South' ~ 'A',
+                                           population == 'Katongwe_N' ~ 'B',
+                                           population == 'Katongwe_S' ~ 'C',
+                                           population == 'Ska' ~ 'D',
+                                           population == 'Kalala' ~ 'E',
+                                           population == 'Nondwa' ~ 'F',
+                                           population == 'Hilltop' ~ 'G',
+                                           population == 'Bangwe' ~ 'H',
+                                           population == 'Jakob' ~ 'I',
+                                           population == 'Ulombola' ~ 'J',
+                                           population == 'full' ~ 'Full'),
+                                 levels = (c('Full', LETTERS[10:1]) )),
+             replicate_val = replicate_label)
+  }
+  
+  pi_bootstrap_full_list[[calc_type]] <- bind_rows(pi_bootstrap_full_list[[calc_type]])
+  
+}
+
+pi_bootstrap_full_list <- bind_rows(pi_bootstrap_full_list)
+
+write.csv(pi_bootstrap_full_list, 
+          here('diversity_divergence_stats', 'processed_results', 'pi_kazumbe_subsample.csv'), row.names = FALSE)
+
+
 
 
 

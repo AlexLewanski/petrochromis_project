@@ -26,6 +26,8 @@ library(cowplot)
 library(ggrepel)
 library(rgeos)
 library(magick)
+library(rgdal) #for adding bathymetry vis
+library(maptools) #for adding bathymetry vis
 library(here)
 
 ### Resources ###
@@ -56,6 +58,10 @@ pca_importance_info <- read.csv(here('PCAs', 'pca_importance_info.csv'))
 #map
 tz_river_shp <- read_sf(here('non_vcf_datafiles', 'shapefiles', 'AFRICOVER_TZ_RIVERS-shapefile/AFRICOVER_TZ_RIVERS.shp'))
 africa_lake_shp <- read_sf(here('non_vcf_datafiles', 'shapefiles', 'africawaterbody', 'Africa_waterbody.shp'))
+contours <- readOGR(dsn=path.expand(here('non_vcf_datafiles', 'shapefiles', 'GIS_Package')),
+                    layer="tcarta_tanganyika_contours",
+                    stringsAsFactors=TRUE,
+                    integer64="warn.loss")
 
 #fish images
 fish_image_list <- list(
@@ -130,16 +136,16 @@ divergence_diversity_plot <- ggplot(data = pi_info %>%
                                       rbind(., dxy_info %>% 
                                               select(-comparison_id) %>% 
                                               mutate(metric = 'dxy')) %>% 
-                                      mutate(metric = factor(metric, levels = c('\u03C0 (polyodon)', '\u03C0 (kazumbe)', 'dxy')))) +
+                                      mutate(metric = factor(metric, levels = c('\u03C0 (kazumbe)', '\u03C0 (polyodon)', 'dxy')))) +
   geom_linerange(aes(x = Population, ymin = lower, ymax = upper, group = metric, color = metric), size = 2) +
   geom_point(aes(x = Population, y = mean, group = metric, color = metric), shape = 21, stroke = 2, size = 5.5) +
   #scale_color_manual(values = c("#3498DB", "#DC7633", "#6c757d"),
   #                   labels = c(expression(paste('\u03C0 (', italic('P. polyodon'), ')')), 
   #                              expression(paste('\u03C0 (', italic('P. kazumbe'), ')')), 'dxy' ) ) +
-  scale_color_manual(values = c("#3498DB", "#DC7633", "#6c757d"),
-                     labels = c(expression(paste('\u03C0 (', italic("P"), ". cf. ",  italic("polyodon"), ')')),
-                                expression(paste('\u03C0 (', italic("P"), ". sp. 'kazumbe'", ')')),
-                                'dxy') ) +
+  scale_color_manual(values = c("#DC7633", "#3498DB", "#6c757d"),
+                     labels = c(expression(paste('\u03C0 (', italic("P"), ". sp. 'kazumbe'", ')')),
+                                expression(paste('\u03C0 (', italic("P"), ". cf. ",  italic("polyodon"), ')')),
+                                expression(d[XY])) ) +
   #ylim(0, max(pi_info$upper)) +
   xlab("Population") + ylab("Average sequence divergence") +
   theme_cowplot() +
@@ -152,8 +158,9 @@ divergence_diversity_plot <- ggplot(data = pi_info %>%
         axis.title.x = element_text(size = 20),
         axis.text.x = element_text(size = 15),
         legend.position="bottom",
+        legend.justification = "center",
         legend.spacing.x = unit(0.2, 'cm'),
-        legend.text = element_text(size = 13, margin = margin(r = 6, unit = "pt"))) +
+        legend.text = element_text(size = 14, margin = margin(r = 4, unit = "pt"))) +
   #theme(panel.grid.major.y = element_line(colour = 'gray', size = 0.4),
   #      legend.position = "none") +
   coord_flip()
@@ -165,7 +172,9 @@ Fst_plot <- ggplot(data = Fst_dataframe_updated %>%
   geom_linerange(aes(x = Population, ymin = lower_CI, ymax = upper_CI, color = group), size = 2) +
   geom_point(aes(x = Population, y = Fst, color = group), shape = 21, stroke = 2, size = 5.5) +
   #ylim(0, max(pi_info$upper)) +
-  xlab("Population") + ylab("Fst") +
+  xlab("Population") + 
+  #ylab(expression(italic(F[ST]))) +
+  ylab(expression(F[ST])) +
   theme_cowplot() +
   theme(plot.margin = margin(5.5, 5.5, 0, 5.5),
         panel.grid.major.y = element_line(colour = 'gray', size = 0.4),
@@ -175,7 +184,8 @@ Fst_plot <- ggplot(data = Fst_dataframe_updated %>%
         axis.title.x = element_text(size = 20),
         axis.text.x = element_text(size = 15),
         legend.position = "bottom",
-        legend.text = element_text(size = 13, color = "white"),
+        legend.justification = "left",
+        legend.text = element_text(size = 14, color = alpha("black", 0)),
         legend.title = element_text(color = "white"),
         legend.key = element_rect(fill = "white")) +
   scale_x_discrete(drop = FALSE) +
@@ -195,7 +205,8 @@ diversity_multipanel <- ggarrange(divergence_diversity_plot, Fst_plot,
 #################################
 
 ### Map set-up ###
-water_color <- '#caf0f8'
+#water_color <- '#caf0f8'
+water_color <- '#ADE4FF'
 
 #lake tanganyika label: 29.61, -4.97
 #Luiche River label: 29.72, -4.85
@@ -214,11 +225,21 @@ sampling_locations <- cichlid_metadata %>%
 
 tz_river_points <- sf::st_point_on_surface(tz_river_shp)
 
+#processing bathymetry data for inset map
+bf.dataframe <- data.frame(id=rownames(contours@data),
+                           values=sample(1:10,length(contours),replace=T),
+                           contours@data, stringsAsFactors=F)
+bf.fort   <- fortify(contours)
+bf.merged <- plyr::join(bf.fort, bf.dataframe, by="id")
+
 # retrieve the coordinates
 tz_river_coords <- as.data.frame(sf::st_coordinates(tz_river_points))
 tz_river_coords$NAME <- tz_river_shp$AUTO_ID
 
-kigoma_box <- st_as_sfc(rgeos::bbox2SP(n = -4.72, s = -5.03, w = 29.55, e = 29.79,
+#kigoma_box <- st_as_sfc(rgeos::bbox2SP(n = -4.72, s = -5.03, w = 29.55, e = 29.79,
+#                                       proj4string = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")))
+
+kigoma_box <- st_as_sfc(rgeos::bbox2SP(n = -4.72, s = -5.03, w = 29.48, e = 29.79,
                                        proj4string = CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")))
 
 
@@ -236,8 +257,9 @@ kigoma_region_map <- ggplot() +
                             point.padding = 0,
                             #min.segment.length = 0.01, nudge_x = 0.02,
                             #min.segment.length = 1, nudge_x = 0.011,
-                            min.segment.length = 1, nudge_x = -0.0112,
-                            seed = 1003) +
+                            #min.segment.length = 1, nudge_x = -0.0112,
+                            min.segment.length = 1, nudge_x = -0.0132,
+                            seed = 1002) + #1003
   geom_text(data = data.frame(label = c('Lake Tanganyika', 'Luiche River'),
                               lon = c(29.61, 29.705),
                               lat = c(-4.97, -4.847)),
@@ -256,7 +278,8 @@ kigoma_region_map <- ggplot() +
         legend.key=element_blank(),
         legend.background=element_blank()) +
   #coord_cartesian(clip = 'off') +
-  xlim(29.55, 29.79) + ylim(-5.03, -4.72) + 
+  #xlim(29.55, 29.79) + ylim(-5.03, -4.72) + 
+  xlim(29.55, 29.80) + ylim(-5.05, -4.68) + 
   scalebar(x.min = 29.55, x.max = 29.79, y.min = -5.03, y.max = -4.72, 
            dist = 5, dist_unit = "km",
            st.dist = .02,
@@ -268,7 +291,6 @@ kigoma_region_map <- ggplot() +
 #inset map of kigoma
 kigoma_inset_map <- ggplot() + 
   geom_sf(data = africa_lake_shp[africa_lake_shp$NAME_OF_WA == "Tanganyika",], fill = water_color, color = water_color, size = 0.1) +
-  geom_sf(data = kigoma_box, fill = NA, color = "red", size = 1) +
   #xlim(28.6, 31.3) + 
   ylim(-8.8, -3.3) +
   scale_x_continuous(breaks = c(29, 30, 31)) + 
@@ -276,15 +298,29 @@ kigoma_inset_map <- ggplot() +
   theme_minimal() +
   theme(#panel.grid.major = element_blank(),
     axis.text = element_text(size = 9),
-    panel.grid.major = element_line(color = '#e7e7e6'))
+    panel.grid.major = element_line(color = '#e7e7e6'),
+    axis.title = element_blank())  +
+  geom_polygon(data=bf.merged[bf.merged$ELEVATION %in% c(-300),], size=0.4,
+               aes(x=long,y=lat,group=group), fill='#5CC6FF') +
+  geom_polygon(data=bf.merged[bf.merged$ELEVATION %in% c(-600),], size=0.4,
+               aes(x=long,y=lat,group=group), fill='#0AA9FF') +
+  geom_polygon(data=bf.merged[bf.merged$ELEVATION %in% c(-900),], size=0.4,
+               aes(x=long,y=lat,group=group), fill='#0092E0') +
+  geom_polygon(data=bf.merged[bf.merged$ELEVATION %in% c(-1200),], size=0.4,
+            aes(x=long,y=lat,group=group), fill='#0077b6') +
+  geom_sf(data = kigoma_box, fill = NA, color = "red", size = 1.1, alpha = 1)
+  #geom_path(data=bf.merged[bf.merged$ELEVATION %in% c(-100, -400, -800, -1200),], size=0.4,
+  #          aes(x=long,y=lat,group=group),color=scales::alpha('#0077b6',0.6))
 
 tanganyika_sampling_map_final <- ggdraw() +
   draw_plot(kigoma_region_map, width = 1, height = 1) +
-  draw_plot(kigoma_inset_map, x = 0.65, y = 0.64, width = 0.37, height = 0.37) +
-  theme(plot.margin = margin(5.5, -5, 5.5, 5.5))
+  #draw_plot(kigoma_inset_map, x = 0.65, y = 0.64, width = 0.4, height = 0.37) +
+  draw_plot(kigoma_inset_map, x = 0.65, y = 0.56, width = 0.47, height = 0.47) +
+  #theme(plot.margin = margin(5.5, -5, 5.5, 5.5))
+  theme(plot.margin = margin(5.5, 10, 5.5, -2))
 
 multipanel_diversity_toprow <- plot_grid(tanganyika_sampling_map_final, ggdraw(diversity_multipanel),
-                                         ncol = 2, rel_widths = c(0.45,0.5), labels = c('(a)', '(b)'), label_size = 32, vjust = 0, hjust = c(-0.1, 0.1) ) +
+                                         ncol = 2, rel_widths = c(0.42,0.5), labels = c('(a)', '(b)'), label_size = 32, vjust = 0, hjust = c(-0.1, 0.1) ) + #rel_widths = c(0.45,0.5)
   theme(plot.margin = margin(32, 0, 8, 0))
 
 
@@ -349,8 +385,9 @@ species_PCA <- ggplot(data = both_species_pca, aes(x = PC1, y= PC2, color = spec
         #legend.title = element_text(size = 18),
         legend.title = element_blank(),
         legend.position = "bottom",
+        legend.justification = "center",
         legend.margin = margin(-6, 0, 0, 0),
-        legend.text = element_text(size = 13, margin = margin(r = 8, unit = "pt")),
+        legend.text = element_text(size = 14, margin = margin(r = 4, unit = "pt")),
         plot.margin = margin(5, 9, 5, 9)) +
   scale_x_continuous(labels = scaleFUN) +
   scale_y_continuous(labels = scaleFUN) +
@@ -458,7 +495,7 @@ location_legend <- get_legend(ggplot(data = both_species_pca_with_locletters,
                                       axis.title = element_text(size = 18),
                                       plot.title = element_text(hjust = 0.5, size = 20, face="italic"),
                                       legend.title = element_text(size = 18),
-                                      legend.text = element_text(size = 15),
+                                      legend.text = element_text(size = 16),
                                       #legend.text = element_text(size = 18, margin = margin(r = 22, unit = "pt")),
                                       legend.position = "right",
                                       #legend.spacing.x = unit(0.3, 'cm')
@@ -486,7 +523,8 @@ plot_grid(multipanel_diversity_toprow,
           multipanel_diversity_bottomrow, nrow = 2, rel_heights = c(0.7, 0.3))
 
 ggsave(here('figures', 'prac_full_multipanel_5_12_2021.png'),
-        width = 19, height = 16, bg = 'white')
+        width = 19, height = 17, bg = 'white')
+#width = 19, height = 16, bg = 'white')
 
 
 

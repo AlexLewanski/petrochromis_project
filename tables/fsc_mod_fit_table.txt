@@ -5,57 +5,57 @@
 \toprule
 Region & Model class & Model name & Number params. & log10(Lhood) & $\Delta$Lhood & AIC & $\Delta$AIC & Rel. Lhood\\
 \midrule
- & Continuous gene flow & contin. gf (asym.) & 9 & -185643.8 & 701.81 & 854939.5 & 1358.45 & approx. 0\\
+ & Continuous gene flow & contin. gf (sym.) & 7 & -238478.5 & 2245.78 & 1098248.0 & 3070.03 & 0\\
 
- & Continuous gene flow & contin. gf (sym.) & 8 & -185986.3 & 1044.25 & 856514.5 & 2933.46 & 0\\
+ & Continuous gene flow & contin. gf (asym.) & 8 & -238043.0 & 1810.29 & 1096244.4 & 1066.50 & approx. 0\\
 
- & Continuous gene flow & contin. gf (0 to 1) & 8 & -186300.4 & 1358.34 & 857960.9 & 4379.90 & 0\\
+ & Continuous gene flow & contin. gf (Pk to Pp) & 7 & -238462.6 & 2229.96 & 1098175.1 & 2997.15 & 0\\
 
- & Continuous gene flow & contin. gf (1 to 0) & 8 & -187145.5 & 2203.46 & 861852.8 & 8271.81 & 0\\
+ & Continuous gene flow & contin. gf (Pp to Pk) & 7 & -243905.5 & 7672.83 & 1123240.5 & 28062.53 & 0\\
 
- & Early gene flow & early gf (asym.) & 10 & -185977.9 & 1035.90 & 856480.0 & 2898.99 & 0\\
+ & Early gene flow & early gf (sym.) & 8 & -238480.6 & 2247.88 & 1098259.6 & 3081.70 & 0\\
 
- & Early gene flow & early gf (sym.) & 9 & -186182.0 & 1240.03 & 857418.0 & 3837.03 & 0\\
+ & Early gene flow & early gf (asym.) & 9 & -238042.4 & 1809.69 & 1096243.7 & 1065.74 & approx. 0\\
 
- & Early gene flow & early gf (0 to 1) & 9 & -186902.9 & 1960.88 & 860737.7 & 7156.69 & 0\\
+ & Early gene flow & early gf (Pk to Pp) & 8 & -238449.6 & 2216.89 & 1098116.9 & 2938.97 & 0\\
 
- & Early gene flow & early gf (1 to 0) & 9 & -187200.5 & 2258.43 & 862108.0 & 8526.96 & 0\\
+ & Early gene flow & early gf (Pp to Pk) & 8 & -243822.3 & 7589.56 & 1122859.0 & 27681.05 & 0\\
 
- & No gene flow & no gf & 7 & -188164.1 & 3222.06 & 866541.7 & 12960.64 & 0\\
+ & Recent gene flow & recent gf (sym.) & 8 & -238190.4 & 1957.73 & 1096923.4 & 1745.49 & 0\\
 
- & Recent gene flow & recent gf (asym.) & 10 & -185348.4 & 406.39 & 853581.0 & 0.00 & 1\\
+ & Recent gene flow & recent gf (asym.) & 9 & -237811.0 & 1578.27 & 1095177.9 & 0.00 & 1\\
 
- & Recent gene flow & recent gf (sym.) & 9 & -185635.6 & 693.56 & 854901.5 & 1320.46 & approx. 0\\
+ & Recent gene flow & recent gf (Pk to Pp) & 8 & -238475.8 & 2243.06 & 1098237.4 & 3059.48 & 0\\
 
- & Recent gene flow & recent gf (0 to 1) & 9 & -186314.8 & 1372.76 & 858029.3 & 4448.30 & 0\\
+ & Recent gene flow & recent gf (Pp to Pk) & 8 & -243927.9 & 7695.23 & 1123345.6 & 28167.66 & 0\\
 
-\multirow{-13}{*}{\centering\arraybackslash Mid} & Recent gene flow & recent gf (1 to 0) & 9 & -187220.5 & 2278.44 & 862200.1 & 8619.10 & 0\\
+\multirow{-13}{*}{\centering\arraybackslash North} & No gene flow & no gf & 6 & -245333.7 & 9101.02 & 1129815.5 & 34637.55 & 0\\
 \cmidrule{1-9}
- & Continuous gene flow & contin. gf (asym.) & 9 & -238043.0 & 1810.29 & 1096246.4 & 1624.64 & 0\\
+ & Continuous gene flow & contin. gf (sym.) & 7 & -185986.3 & 1044.25 & 856512.5 & 2989.01 & 0\\
 
- & Continuous gene flow & contin. gf (sym.) & 8 & -238478.5 & 2245.78 & 1098250.0 & 3628.18 & 0\\
+ & Continuous gene flow & contin. gf (asym.) & 8 & -185643.8 & 701.81 & 854937.5 & 1414.00 & approx. 0\\
 
- & Continuous gene flow & contin. gf (0 to 1) & 8 & -238462.6 & 2229.96 & 1098177.1 & 3555.30 & 0\\
+ & Continuous gene flow & contin. gf (Pk to Pp) & 7 & -186300.4 & 1358.34 & 857958.9 & 4435.44 & 0\\
 
- & Continuous gene flow & contin. gf (1 to 0) & 8 & -243905.5 & 7672.83 & 1123242.5 & 28620.67 & 0\\
+ & Continuous gene flow & contin. gf (Pp to Pk) & 7 & -187145.5 & 2203.46 & 861850.8 & 8327.36 & 0\\
 
- & Early gene flow & early gf (asym.) & 10 & -239927.0 & 3694.25 & 1104924.4 & 10302.63 & 0\\
+ & Early gene flow & early gf (sym.) & 8 & -185986.0 & 1043.97 & 856513.2 & 2989.72 & 0\\
 
- & Early gene flow & early gf (sym.) & 9 & -240170.5 & 3937.80 & 1106044.0 & 11422.21 & 0\\
+ & Early gene flow & early gf (asym.) & 9 & -185683.5 & 741.53 & 855122.4 & 1598.90 & 0\\
 
- & Early gene flow & early gf (0 to 1) & 9 & -240930.8 & 4698.10 & 1109545.3 & 14923.50 & 0\\
+ & Early gene flow & early gf (Pk to Pp) & 8 & -186297.8 & 1355.78 & 857949.1 & 4425.65 & 0\\
 
- & Early gene flow & early gf (1 to 0) & 9 & -243617.5 & 7384.83 & 1121918.2 & 27296.39 & 0\\
+ & Early gene flow & early gf (Pp to Pk) & 8 & -187035.9 & 2093.86 & 861348.1 & 7824.62 & 0\\
 
- & No gene flow & no gf & 7 & -245333.7 & 9101.02 & 1129817.5 & 35195.70 & 0\\
+ & Recent gene flow & recent gf (sym.) & 8 & -185635.2 & 693.18 & 854897.7 & 1374.26 & approx. 0\\
 
- & Recent gene flow & recent gf (asym.) & 10 & -237689.8 & 1457.07 & 1094621.8 & 0.00 & 1\\
+ & Recent gene flow & recent gf (asym.) & 9 & -185336.4 & 394.33 & 853523.5 & 0.00 & 1\\
 
- & Recent gene flow & recent gf (sym.) & 9 & -238023.0 & 1790.27 & 1096154.2 & 1532.44 & 0\\
+ & Recent gene flow & recent gf (Pk to Pp) & 8 & -186309.2 & 1367.13 & 858001.4 & 4477.92 & 0\\
 
- & Recent gene flow & recent gf (0 to 1) & 9 & -238478.8 & 2246.08 & 1098253.4 & 3631.56 & 0\\
+ & Recent gene flow & recent gf (Pp to Pk) & 8 & -187154.1 & 2212.07 & 861892.4 & 8368.98 & 0\\
 
-\multirow{-13}{*}{\centering\arraybackslash North} & Recent gene flow & recent gf (1 to 0) & 9 & -243913.9 & 7681.21 & 1123283.0 & 28661.23 & 0\\
+\multirow{-13}{*}{\centering\arraybackslash Mid} & No gene flow & no gf & 6 & -188164.1 & 3222.06 & 866539.7 & 13016.19 & 0\\
 \bottomrule
 \end{tabular}}
 \end{table}

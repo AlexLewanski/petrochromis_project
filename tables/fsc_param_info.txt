@@ -1,23 +1,23 @@
 \begin{table}[!h]
 \centering
 \resizebox{\linewidth}{!}{
-\begin{tabular}[t]{cccccc}
+\begin{tabular}[t]{ccccccc}
 \toprule
-\multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } & \multicolumn{2}{c}{Search Range} & \multicolumn{1}{c}{ } \\
+\multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } & \multicolumn{2}{c}{Search Range} & \multicolumn{1}{c}{ } & \multicolumn{1}{c}{ } \\
 \cmidrule(l{3pt}r{3pt}){4-5}
-Value Type & Parameter & Distribution & Lower & Upper & Bounded\\
+Value Type & Parameter & Distribution & Lower & Upper & Bounded & Description\\
 \midrule
-Integer & N\_POP1 & Log-uniform & 10 & 2e6 & No\\
-Integer & N\_POP2 & Log-uniform & 10 & 2e6 & No\\
-Integer & N\_ANC\_POP1 & Log-uniform & 10 & 2e6 & No\\
-Integer & N\_ANC\_POP2 & Log-uniform & 10 & 2e6 & No\\
-Float & RSANC & Log-uniform & 0.1 & 100 & No\\
+Integer & N\_POP1 & Log-uniform & 10 & 2e6 & No & kazumbe pop size\\
+Integer & N\_POP2 & Log-uniform & 10 & 2e6 & No & polyodon pop size\\
+Integer & N\_ANC\_POP1 & Log-uniform & 10 & 2e6 & No & initial kazumbe pop size\\
+Integer & N\_ANC\_POP2 & Log-uniform & 10 & 2e6 & No & initial polyodon pop size\\
+Float & RSANC & Log-uniform & 0.1 & 100 & No & anc. pop size (relative to sink deme)\\
 \addlinespace
-Integer & TDIV & Uniform & 10 & 2.5e05 & No\\
-Float & MIG & Log-uniform & 1e-06 & 0.001 & No\\
-Float & TPROP & Log-uniform & 1e-04 & 0.5 & No\\
-Float & MIG01 & Log-uniform & 1e-06 & 0.001 & No\\
-Float & MIG10 & Log-uniform & 1e-06 & 0.001 & No\\
+Integer & TDIV & Uniform & 10 & 2.5e05 & No & time to divergence\\
+Float & MIG & Log-uniform & 1e-06 & 0.001 & No & mig. rate (symmetric mig. models)\\
+Float & TPROP & Log-uniform & 1e-04 & 0.5 & No & prop of TDIV to mig. cessation\\
+Float & MIG01 & Log-uniform & 1e-06 & 0.001 & No & mig. rate, kazumbe to polyodon\\
+Float & MIG10 & Log-uniform & 1e-06 & 0.001 & No & mig. rate, polyodon to kazumbe\\
 \bottomrule
 \end{tabular}}
 \end{table}

@@ -281,3 +281,32 @@ ggsave2(here('figures', 'petro_multipanelpopvae_9_7_2021.png'), width = 22, heig
 # write.table(polyodon_ids, paste0(out_path, 'POLYODON_IDs_kazumbe_polyodon_pundamilia_8_19_2020_maf0.01_maxmissing0.70_minDP5_post_4.recode.txt'), 
 #             sep="\t", col.names = FALSE, quote = FALSE, row.names = FALSE)
 
+# library(readxl)
+# sample_info_2007 <- read_excel('/Users/alexlewanski/Downloads/MASTEREXTRACTIONLIST2007.xls', sheet = "All")
+# 
+# popvae_kazumbe_with_sexinfo <- sample_info_2007 %>% 
+#   mutate(sampleID = gsub("\\.", "_", `Specimen #`),
+#          sex = if_else(is.na(sex), 'unknown', sex)) %>% 
+#   select(sampleID, sex) %>% 
+#   left_join(popvae_kazumbe_metadata, ., by = 'sampleID') %>% 
+#   mutate(sex = if_else(is.na(sex), 'unknown', sex))
+# 
+# sexinfo_samples <- sample_info_2007 %>% 
+#   mutate(sampleID = gsub("\\.", "_", `Specimen #`),
+#          sex = if_else(is.na(sex), 'unknown', sex)) %>% 
+#   filter(Species == 'Petrochromis kazumbe' & sex != 'unknown') %>% 
+#   pull(sampleID)
+# 
+# sexinfo_samples[sexinfo_samples %in% popvae_kazumbe_with_sexinfo$sampleID]
+# 
+# table(popvae_kazumbe_with_sexinfo$sex)
+# 
+# 
+# popvae_kazumbe_with_sexinfo %>% 
+#   ggplot() +
+#   geom_point(aes(x = LD1, y = LD2, color = sex, size = sex, alpha = sex)) +
+#   scale_size_manual(values = c(5, 5, 3)) +
+#   scale_color_manual(values = c('#e56b6f', '#00afb9', 'gray')) +
+#   scale_alpha_manual(values = c(0.8, 0.8, 0.5)) +
+#   theme_bw()
+

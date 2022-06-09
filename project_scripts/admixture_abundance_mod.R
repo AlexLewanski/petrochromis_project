@@ -532,3 +532,356 @@ cat(survey_info_table, file = here('tables', 'survey_info_table.txt'), append = 
 #   
 # }
 
+
+# library(tidymv)
+# 
+# construct_gam_confint_alt <- function(mod, number_predicted_vals = 50) {
+#   #https://stats.stackexchange.com/questions/33327/confidence-interval-for-gam-model
+#   
+#   predictor_var <- colnames(mod$model)[2]
+#   
+#   new_data_df <- data.frame(x = seq(min(mod$model[, 2]), max(mod$model[, 2]), length.out = number_predicted_vals)) 
+#   colnames(new_data_df) <- predictor_var
+#   
+#   #point estimate
+#   estimate_df <- data.frame(predictor = new_data_df[, 1],
+#                             estimate = predict(mod, new_data_df, type = "response", se.fit = FALSE))
+#   
+#   #confidence intervals
+#   mod_predict <- predict(mod, new_data_df, type = "link", se.fit = TRUE)
+#   
+#   lower_confint <- mod_predict$fit - (2 * mod_predict$se.fit)
+#   upper_confint <- mod_predict$fit + (2 * mod_predict$se.fit)
+#   
+#   estimate_df$lower_confint <- as.vector(mod$family$linkinv(lower_confint))
+#   estimate_df$upper_confint <- as.vector(mod$family$linkinv(upper_confint))
+#   
+#   return(estimate_df)
+# }
+# 
+# get_gam_predictions(model = bothspecies_dens_gam_beta, series = mean_dens_focal_species)
+# 
+# predict_gam(model = bothspecies_dens_gam_beta)
+# 
+# construct_gam_confint(mod = bothspecies_dens_gam_beta, number_predicted_vals = 50)
+# 
+# 
+# colnames(bothspecies_dens_gam_beta$model)
+# 
+# library(betareg)
+# library(ggeffects)
+# combined_dataset_bothspecies <- merged_dataset_kazumbe %>% 
+#   mutate(updated_species_id = 'P. kazumbe',
+#          mean_dens_focal_species = mean_density_kazumbe,
+#          minor_parent_ancestry = V1) %>% 
+#   rbind(., merged_dataset_polyodon %>% 
+#           mutate(updated_species_id = 'P. polyodon',
+#                  mean_dens_focal_species = mean_density_polyodon,
+#                  minor_parent_ancestry = V2)) %>% 
+#   mutate(ord_sp = ordered(updated_species_id, levels = c('P. kazumbe', 'P. polyodon')),
+#          fac_sp = factor(updated_species_id))
+# 
+# 
+# 
+# both_sp_beta  <- betareg(minor_parent_ancestry ~ ord_sp + mean_dens_focal_species + ord_sp*mean_dens_focal_species, 
+#                          data = combined_dataset_bothspecies, link = "logit")
+# 
+# poly_beta <- betareg(minor_parent_ancestry ~ mean_dens_focal_species, 
+#                      data = combined_dataset_bothspecies %>%
+#                        filter(ord_sp == 'P. polyodon'), link = "logit")
+# 
+# kaz_beta <- betareg(minor_parent_ancestry ~ mean_dens_focal_species, 
+#                     data = combined_dataset_bothspecies %>%
+#                       filter(ord_sp == 'P. kazumbe'), link = "logit")
+# 
+# 
+# summary(both_sp_beta)
+# 
+# as.data.frame(ggpredict(poly_beta, terms = c("mean_dens_focal_species"))) %>%
+#   ggplot() +  
+#   geom_point(data = combined_dataset_bothspecies %>% 
+#                filter(ord_sp == 'P. polyodon'),
+#              mapping = aes(x = mean_dens_focal_species, y = minor_parent_ancestry)) +
+#   geom_ribbon(aes(x = x, ymin = conf.low, ymax = conf.high), alpha = 0.5, fill = 'blue') +
+#   geom_line(aes(x = x, y = predicted), size = 2, color = 'gray')
+# 
+# as.data.frame(ggpredict(kaz_beta, terms = c("mean_dens_focal_species"))) %>%
+#   ggplot() +  
+#   geom_point(data = combined_dataset_bothspecies %>% 
+#                filter(ord_sp == 'P. kazumbe'),
+#              mapping = aes(x = mean_dens_focal_species, y = minor_parent_ancestry)) +
+#   geom_ribbon(aes(x = x, ymin = conf.low, ymax = conf.high), alpha = 0.5, fill = 'blue') +
+#   geom_line(aes(x = x, y = predicted), size = 2, color = 'gray')
+# 
+# 
+# as.data.frame(ggpredict(both_sp_beta, terms = c("mean_dens_focal_species", "ord_sp"))) %>% 
+#   ggplot() +  
+#   geom_point(data = combined_dataset_bothspecies,
+#              mapping = aes(x = mean_dens_focal_species, y = minor_parent_ancestry, color = ord_sp),
+#              size = 3 ) +
+#   geom_ribbon(aes(x = x, ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.4) +
+#   geom_line(aes(x = x, y = predicted, color = group), size = 2) +
+#   theme_bw()
+# library(gratia)
+# 
+# library(lme4)
+# library(glmmTMB)
+# library(gamm4)
+# 
+# 
+# both_sp_beta  <- glmmTMB(minor_parent_ancestry ~ ord_sp + mean_dens_focal_species + ord_sp*mean_dens_focal_species + (1|location), 
+#                          data = combined_dataset_bothspecies, beta_family(link="logit"))
+# plot(both_sp_beta)
+# ggpredict(both_sp_beta, terms = c('mean_dens_focal_species', 'ord_sp'))
+# 
+# as.data.frame(ggemmeans(both_sp_beta, terms = c('mean_dens_focal_species', 'ord_sp'))) %>% 
+#   ggplot() +  
+#   geom_point(data = combined_dataset_bothspecies,
+#              mapping = aes(x = mean_dens_focal_species, y = minor_parent_ancestry, color = ord_sp)) +
+#   geom_ribbon(aes(x = x, ymin = conf.low, ymax = conf.high, fill = group), alpha = 0.5) +
+#   geom_line(aes(x = x, y = predicted, color = group), size = 2) +
+#   scale_color_manual(values = c('green', 'blue')) +
+#   scale_fill_manual(values = c('green', 'blue')) +
+#   theme_bw()
+# 
+# summary(both_sp_beta)
+# 
+# predict(both_sp_beta, type ='response')
+# 
+# confint(both_sp_beta)
+# 
+# summary(both_sp_beta)
+# 
+# 
+# lmer(minor_parent_ancestry ~ ord_sp + mean_dens_focal_species + ord_sp*mean_dens_focal_species + (1|location), 
+#      data = combined_dataset_bothspecies)
+# 
+# 
+# summary(glmmTMB(minor_parent_ancestry ~ ord_sp + mean_dens_focal_species + ord_sp*mean_dens_focal_species + (1|location), 
+#                 data = combined_dataset_bothspecies))
+# 
+# summary(both_sp_beta)
+# 
+# as.data.frame(ggpredict(both_sp_beta, terms = c("mean_dens_focal_species", "ord_sp"))) %>%
+#   filter(group == 'P. kazumbe') %>% 
+#   ggplot() +  
+#   geom_point(data = combined_dataset_bothspecies %>% 
+#                filter(ord_sp == 'P. kazumbe'),
+#              mapping = aes(x = mean_dens_focal_species, y = minor_parent_ancestry)) +
+#   geom_ribbon(aes(x = x, ymin = conf.low, ymax = conf.high), alpha = 0.5, fill = 'blue') +
+#   geom_line(aes(x = x, y = predicted), size = 2, color = 'gray') +
+#   theme_bw()
+# 
+# as.data.frame(ggpredict(beta_glm, terms = c("mean_dens_focal_species", "ord_sp"))) %>%
+#   filter(group == 'P. polyodon') %>% 
+#   ggplot() +  
+#   geom_point(data = combined_dataset_bothspecies %>% 
+#                filter(ord_sp == 'P. polyodon'),
+#              mapping = aes(x = mean_dens_focal_species, y = minor_parent_ancestry)) +
+#   geom_ribbon(aes(x = x, ymin = conf.low, ymax = conf.high), alpha = 0.5, fill = 'blue') +
+#   geom_line(aes(x = x, y = predicted), size = 2, color = 'gray') +
+#   theme_bw()
+# 
+# summary(beta_glm)
+# 
+# 
+# ggplot() +
+#   geom_point(data = combined_dataset_bothspecies,
+#              mapping = aes(x = mean_dens_focal_species, y = minor_parent_ancestry, color = ord_sp))
+# summary(beta_glm)
+# 
+# 
+# ggpredict(beta_glm, terms = c("ord_sp", "mean_dens_focal_species")) %>% 
+#   ggplot(., aes(x = x, y = predicted, colour = group)) +
+#   geom_line()
+# 
+# glm(formula = V2 ~ mean_dens_focal_species + mean_dens_focal_species*mean_dens_focal_species)
+# 
+# b2r<-gamm(minor_parent_ancestry ~ ord_sp + 
+#             s(mean_dens_focal_species, by = ord_sp), 
+#           data = combined_dataset_bothspecies,
+#           family = betar(link = "logit"),
+#           random = ~ (1|location))
+# 
+# b2r<-gamm4(minor_parent_ancestry ~ ord_sp + 
+#              s(mean_dens_focal_species, by = ord_sp), 
+#            data = combined_dataset_bothspecies,
+#            random = ~ (1|location))
+# 
+# plot(b2r$gam)
+# 
+# 
+# m2b<-gamm(yb~s(x1)+s(x2)+s(x3),family=betar(link='logit'),data=dat,random=list(g=~1))
+# m0 <- gamm4(yp~s(x0)+s(x1)+s(x2)+s(x3),family = poisson,data=dat,random = ~ (1|g))
+# 
+# 
+# bothspecies_dens_gam_beta <- gam(V2 ~ s(mean_dens_focal_species, k = 4, bs = "tp"),
+#                                  family = betar(link = "logit"),
+#                                  data = combined_dataset_bothspecies, 
+#                                  method = "REML")
+# 
+# bothspecies_dens_gam_beta <- gam(minor_parent_ancestry ~ ord_sp + 
+#                                    s(mean_dens_focal_species, k = 4) + 
+#                                    s(mean_dens_focal_species, by = ord_sp), 
+#                                  data = combined_dataset_bothspecies,
+#                                  family = betar(link = "logit"),
+#                                  method = 'REML')
+# 
+# 
+# 
+# bothspecies_dens_gam_gaus <- gam(minor_parent_ancestry ~ ord_sp + 
+#                                    s(mean_dens_focal_species, k = 4) + 
+#                                    s(mean_dens_focal_species, by = ord_sp), 
+#                                  data = combined_dataset_bothspecies,
+#                                  method = 'REML')
+# plot(bothspecies_dens_gam_gaus)
+# 
+# 
+# 
+# bothspecies_dens_gam_beta <- gam(minor_parent_ancestry ~ ord_sp + 
+#                                    s(mean_dens_focal_species, by = ord_sp), 
+#                                  data = combined_dataset_bothspecies,
+#                                  family = betar(link = "logit"),
+#                                  method = 'REML')
+# 
+# 
+# summary(bothspecies_dens_gam_beta)
+# sm_diffs <- difference_smooths(bothspecies_dens_gam_beta, smooth = "s(mean_dens_focal_species)")
+# 
+# bothspecies_dens_gam_beta <- gam(minor_parent_ancestry ~ fac_sp + 
+#                                    s(mean_dens_focal_species, by = fac_sp, k = 4) +
+#                                    s(long, lat, bs = 'gp', k = 5, m=2), 
+#                                  data = combined_dataset_bothspecies,
+#                                  family = betar(link = "logit"),
+#                                  method = 'REML')
+# 
+# 
+# predict_gam_prac <- predict(bothspecies_dens_gam_beta, type="response", se.fit=TRUE)
+# predict_gam_prac_df = cbind(combined_dataset_bothspecies, response = predict_gam_prac$fit, lwr = predict_gam_prac$fit-2*predict_gam_prac$se.fit, upr = predict_gam_prac$fit+2*predict_gam_prac$se.fit)
+# 
+# ggplot() +
+#   geom_ribbon(data = predict_gam_prac_df, mapping=aes(x=mean_dens_focal_species, ymin=lwr, ymax=upr, fill=fac_sp), alpha=0.25) +
+#   geom_line(data = predict_gam_prac_df, mapping=aes(x=mean_dens_focal_species, y=response, col=fac_sp)) +
+#   geom_point(data = combined_dataset_bothspecies, mapping=aes(x=mean_dens_focal_species, y=minor_parent_ancestry, col=fac_sp)) #+
+# #facet_wrap(~fac_sp)
+# 
+# 
+# ggplot(combined_dataset_bothspecies, 
+#        aes(x = mean_dens_focal_species, y = minor_parent_ancestry, colour = fac_sp)) +
+#   geom_point() +
+#   geom_smooth(method = 'loess', se = FALSE) +
+#   scale_colour_brewer(type = 'qual', palette = 'Dark2') +
+#   theme(legend.position = 'top')
+# 
+# m <- gam(minor_parent_ancestry ~ fac_sp + s(mean_dens_focal_species, by = fac_sp, k = 4),
+#          family = betar(link = "logit"),
+#          data = combined_dataset_bothspecies)
+# summary(m)
+# 
+# plot(m, shade = TRUE, pages = 1, scale = 0)
+# 
+# summary(bothspecies_dens_gam_beta)
+# 
+# 
+# fit <- lm(y ~ x1 + x2 + I(x2^2) + x1:x2 + x1:I(x2^2))
+# 
+# 
+# 
+# s(long, lat, bs = 'gp', k = 5, m = 2)
+# 
+# 
+# v1_kazumbedens_gam_beta_gp <- gam(V1 ~ s(mean_density_kazumbe, k = 3) +
+#                                     s(long, lat, bs = 'gp', k = 5, m = 2),
+#                                   family = betar(link = "logit"),
+#                                   data = merged_dataset_kazumbe, 
+#                                   method = "REML")
+# 
+# plot(v1_kazumbedens_gam_beta_gp)
+# 
+# v1_polyodondens_gam_beta_gp <- gam(V2 ~ s(mean_density_polyodon, k = 3) +
+#                                      s(long, lat, bs = 'gp', k = 5, m = 2),
+#                                    family = betar(link = "logit"),
+#                                    data = merged_dataset_polyodon, 
+#                                    method = "REML")
+# 
+# get_gam_predictions
+# 
+# #create dataframe of predictor value, estimate, and lower and upper CIs for each GAM
+# kazumbe_mod_info_gp <- construct_gam_confint(mod = v1_kazumbedens_gam_beta_gp)
+# polyodon_mod_info_gp <- construct_gam_confint(mod = v1_polyodondens_gam_beta_gp)
+# 
+# plot(v1_polyodondens_gam_beta_gp)
+# 
+# plot_smooths(v1_kazumbedens_gam_beta_gp, 
+#              mean_density_kazumbe, transform = exp, series_length = 70)
+# 
+# 
+# 
+# 
+# get_gam_predictions(model = bothspecies_dens_gam_beta,
+#                     series = mean_dens_focal_species,
+#                     series_length = 50,
+#                     transform = exp) %>% 
+#   ggplot() +
+#   geom_line(aes(x = mean_dens_focal_species, y = minor_parent_ancestry, color = fac_sp)) +
+#   geom_point(data = combined_dataset_bothspecies,
+#              aes(x = mean_dens_focal_species, y = minor_parent_ancestry, color = fac_sp)) +
+#   theme_bw()
+# 
+# 
+# 
+# get_gam_predictions(model = v1_kazumbedens_gam_beta,
+#                     series = mean_density_kazumbe,
+#                     series_length = 50,
+#                     transform = exp) %>% 
+#   ggplot() +
+#   geom_ribbon(aes(x = mean_density_kazumbe, ymin = CI_lower, ymax = CI_upper), fill = 'gray', alpha = 0.5) +
+#   theme_bw()
+# 
+# get_gam_predictions(model = v1_kazumbedens_gam_beta_gp,
+#                     series = mean_density_kazumbe,
+#                     series_length = 50,
+#                     transform = exp) %>% 
+#   ggplot() +
+#   geom_ribbon(aes(x = mean_density_kazumbe, ymin = CI_lower, ymax = CI_upper), fill = 'gray', alpha = 0.5) +
+#   geom_point(data = merged_dataset_kazumbe, 
+#              aes(x = mean_density_kazumbe, y = V1)) +
+#   theme_bw()
+# 
+# get_gam_predictions(model = v1_polyodondens_gam_beta_gp,
+#                     series = mean_density_polyodon,
+#                     series_length = 50,
+#                     transform = exp) %>% 
+#   ggplot() +
+#   geom_ribbon(aes(x = mean_density_polyodon, ymin = CI_lower, ymax = CI_upper), fill = 'gray', alpha = 0.5) +
+#   geom_point(data = merged_dataset_polyodon, 
+#              aes(x = mean_density_polyodon, y = V2)) +
+#   theme_bw()
+# 
+# 
+# v1_kazumbedens_gam_beta
+# v1_polyodondens_gam_beta
+# 
+# combined_dataset_bothspecies %>% 
+#   ggplot(aes(x = mean_dens_focal_species, y = minor_parent_ancestry, color = ord_sp)) +
+#   geom_point(size = 5) +
+#   theme_bw()
+# 
+# v1_polyodondens_gam_beta_gp
+# 
+# 
+# plot_smooths(bothspecies_dens_gam_beta, mean_dens_focal_species, fac_sp, transform = exp, series_length = 70) +
+#   theme(legend.position = "top") +
+#   geom_point(data = combined_dataset_bothspecies,
+#              aes(x = mean_dens_focal_species, y = minor_parent_ancestry, color = fac_sp),
+#              size = 5) +
+#   theme_bw() +
+#   ylim(0, 0.5)
+# 
+# plot(bothspecies_dens_gam_beta)
+# 
+# 
+# gam(Hg ~ oSoilType + ss(mean_dens_focal_species, k = 4, bs = "tp", by = updated_species_id) + s(Date, by = oSoilType), data = metals,
+#     method = 'REML')
+
+

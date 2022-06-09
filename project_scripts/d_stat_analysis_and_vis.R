@@ -98,6 +98,20 @@ dstat_type_a <- read.table(here('DStats', 'Results', 'results_9_19_2021', 'dstat
 dstat_type_b_kazumbe <- read.table(here('DStats', 'Results', 'results_9_19_2021', 'dstat_results_TYPEBKazumbe_colormorphs_9_19_21.txt'), header = TRUE)
 dstat_type_b_polyodon <- read.table(here('DStats', 'Results', 'results_9_19_2021', 'dstat_results_TYPEBPolyodon_colormorphs_9_19_21.txt'), header = TRUE)
 
+rand_list <- list()
+rand_list[['polyodon']] <- read.table(here('DStats', 'Results', 'results_2_4_2021_randomized', 'dstat_randomized_compiledresults_polyodon.txt'), header = TRUE)
+rand_list[['kazumbe']] <- read.table(here('DStats', 'Results', 'results_2_4_2021_randomized', 'dstat_randomized_compiledresults_kazumbe.txt'), header = TRUE)
+
+
+### Custom function(s) ###
+ecdf_fun <- function(x, perc, scale = c('quantile', 'percentile')) {
+  #calculate the proportion (quantile) or percentage (percentile) of values in the
+  #empirical distribution (x) that are less than or equal to the focal value (perc)
+  #modified from: https://stats.stackexchange.com/questions/50080/estimate-quantile-of-value-in-a-vector
+  scale_val <- switch(scale, 'quantile' = 1, 'percentile' = 100)
+  return(scale_val*ecdf(x)(perc))
+}
+
 
 
 #######################
@@ -112,7 +126,6 @@ type_b_list <- list(kazumbe = dstat_type_b_kazumbe, polyodon = dstat_type_b_poly
 
 full_data_list <- list(type_a = type_a_list,
                        type_b = type_b_list)
-
 
 ### (ADMIXTOOLS) 2b. initial processing of d-stat results including extracting taxa and location information for p1, p2, and p3 (ADMIXTOOLS) ###
 for (type in names(full_data_list)) {
@@ -155,7 +168,7 @@ for (type in names(full_data_list)) {
                                                           p1_location_factor == 'Bangwe' ~ "H",
                                                           p1_location_factor == 'Jakob' ~ "I",
                                                           p1_location_factor == 'Ulombola' ~ "J"),
-                                                levels= LETTERS[1:10]),
+                                                levels= rev(LETTERS[1:10])),
              p2_p3_location_factor_plotting = factor(case_when(p2_p3_location_factor == 'Gombe_South' ~ "Gombe S",
                                                                p2_p3_location_factor == 'Katongwe_N' ~ "Katongwe N",
                                                                p2_p3_location_factor == 'Katongwe_S' ~ "Katongwe S",
@@ -266,6 +279,115 @@ significant_dstats <- sapply(setNames(nm = c('kazumbe', 'polyodon')), function(S
   )
   
 }, results = full_data_list$type_b)
+
+
+
+################################################
+### 3. PROCESS THE RANDOMIZED D STAT RESULTS ###
+################################################
+
+rand_list_processed <- rand_list %>% 
+  map(~.x %>% 
+        #mutate(id = paste(P1, P2, P3, outgroup, sep = "_")) %>% 
+        group_by(P1, P2, P3, outgroup) %>% 
+        summarize(mean_d = mean(D),
+                  sd_d = sd(D),
+                  .groups = 'drop'))
+
+obs_rand_list <- lapply(setNames(nm = c('polyodon', 'kazumbe')), function(x, observed, rand) {
+  
+  return(
+    inner_join(x = observed[[x]],
+               y = rand[[x]],
+               by = c('P1', 'P2', 'P3', 'outgroup')) %>% 
+      mutate(d_randomized_z = (D - mean_d)/sd_d)
+  )
+  
+}, observed = full_data_list$type_b, rand = rand_list_processed)
+
+
+observed_quantile_list <- list()
+
+for (SPECIES in c('polyodon', 'kazumbe')) {
+  dstat_id <- full_data_list$type_b[[SPECIES]] %>% 
+    mutate(id = paste(P1, P2, P3, outgroup, sep = "_")) %>% 
+    pull(id)
+  
+  observed_quantile_list[[SPECIES]] <- lapply(dstat_id, function(ID, rand_list, obs_list) {
+    
+    ecdf_val <- ecdf_fun(x = rand_list %>% filter(id == ID) %>% pull(D), 
+                         perc = obs_list %>% filter(id == ID) %>% pull(D), 
+                         scale = 'quantile')
+    
+    return(data.frame(id = ID, ecdf_val =  ecdf_val))
+    
+  }, rand_list = rand_list[[SPECIES]] %>% mutate(id = paste(P1, P2, P3, outgroup, sep = "_")),
+  obs_list = full_data_list$type_b[[SPECIES]] %>% mutate(id = paste(P1, P2, P3, outgroup, sep = "_"))
+  ) %>% 
+    bind_rows()
+  
+  #observed_quantile_list[[SPECIES]] <- observed_quantile_list[[SPECIES]] %>% 
+  #  mutate(sig_level = case_when(ecdf_val >= 0.975 | ecdf_val <= 0.025 ~ '95',
+  #                               (ecdf_val < 0.975 & ecdf_val >= 0.95) | (ecdf_val > 0.025 & ecdf_val <= 0.05) ~ '90',
+  #                               ecdf_val > 0.05 & ecdf_val < 0.95 & D > 0 ~ 'none_positive',
+  #                               ecdf_val > 0.05 & ecdf_val < 0.95 & D < 0 ~ 'none_negative'))
+}
+
+
+obs_rand_list_complete <- lapply(setNames(nm = c('polyodon', 'kazumbe')), function(SPECIES, quant_list, obs_rand) {
+  
+  inner_join(obs_rand[[SPECIES]] %>% mutate(id = paste(P1, P2, P3, outgroup, sep = "_")),
+             quant_list[[SPECIES]],
+             by = 'id') %>% 
+    select(!id) %>% 
+    mutate(sig_level = case_when(ecdf_val >= 0.975 | ecdf_val <= 0.025 ~ '95',
+                                 (ecdf_val < 0.975 & ecdf_val >= 0.95) | (ecdf_val > 0.025 & ecdf_val <= 0.05) ~ '90',
+                                 ecdf_val > 0.05 & ecdf_val < 0.95 & D > 0 ~ 'none_positive',
+                                 ecdf_val > 0.05 & ecdf_val < 0.95 & D < 0 ~ 'none_negative'))
+  
+}, quant_list = observed_quantile_list, obs_rand = obs_rand_list)
+
+
+obs_rand_list_complete$kazumbe
+
+
+outgroup_taxa <- c('diagramma', 'green') #the outgroup taxa used in the d-stats
+focal_taxa <- c('kazumbe', 'polyodon') #the two species included in the d-stats
+
+dstat_df_list_random <- list()
+
+#for (type in names(full_data_list)) {
+#outgroup_list <- list()
+
+for (out in outgroup_taxa) {
+  focal_taxa_list <- list()
+  
+  for (focal in focal_taxa) {
+    focal_df <- obs_rand_list_complete[[focal]][which(obs_rand_list_complete[[focal]]$outgroup == out), c('p2_p3_location_factor_plotting', 'p2_p3_location_factor_letter', 'p1_location_factor_plotting', 'p1_location_factor_letter', 'D', 'z_score', 'ecdf_val', 'sig_level')]
+    
+    focal_df$D_absolute <- abs(focal_df$D)
+    focal_df$z_score_absolute <- abs(focal_df$z_score)
+    
+    # focal_df$inference[focal_df$z_score < - 3] <- "P2 allele sharing"
+    # focal_df$inference[focal_df$z_score > 3] <- "P1 allele sharing"
+    # focal_df$inference[ (focal_df$z_score <= 3) & (focal_df$z_score >= -3)] <- "no excess allele sharing"
+    
+    #c2a5cf light red
+    ##a6dba0 light green
+    focal_df <- focal_df %>% 
+      mutate(color_ecdf = case_when(sig_level == '95' & D < 0 ~ "#512A5E",
+                                    sig_level == '90' & D < 0 ~ "#9358A7",
+                                    sig_level == 'none_negative' ~ "#CFB5D8",
+                                    sig_level == 'none_positive' ~ "#BADEC9",
+                                    sig_level == '90' & D > 0 ~ "#309D5D",
+                                    sig_level == '95' & D > 0 ~ "#0F582D") )
+    
+    focal_taxa_list[[focal]] <- focal_df
+  }
+  dstat_df_list_random[[out]] <- focal_taxa_list
+}
+#dstat_df_list_random[[type]] <- outgroup_list
+#}
 
 
 
@@ -395,6 +517,8 @@ z_legend <- ggplot(data.frame(x = c(0, 0, 1, 1),
   theme_void()
 
 empty_plot <- ggplot() + theme_void()
+
+
 
 
 #kazumbe_corrplot_title <- expression(paste(italic("P. kazumbe"), " (Pk)"))
@@ -550,10 +674,27 @@ processed_table_info <- lapply(dstat_df_list, function(TYPE) {
         rename("P1 location" = p1_location_factor_letter,
                "P2/P3 location" = p2_p3_location_factor_letter,
                "Z-score" = z_score)
-      
     })
   })
 })
+
+processed_table_info$type_b$diagramma$kazumbe <- dstat_df_list_random$diagramma$kazumbe %>% 
+  rename("P1 location" = p1_location_factor_letter,
+         "P2/P3 location" = p2_p3_location_factor_letter,
+         "Randomized percentile" = ecdf_val) %>% 
+  select(`P1 location`, `P2/P3 location`, `Randomized percentile`) %>% 
+  left_join(x = processed_table_info$type_b$diagramma$kazumbe, y = ., by = c("P1 location", "P2/P3 location")) %>% 
+  mutate(`P1 location` = factor(`P1 location`, levels = LETTERS[1:10]) ) %>% 
+  arrange(`P1 location`, `P2/P3 location`)
+
+processed_table_info$type_b$diagramma$polyodon <- dstat_df_list_random$diagramma$polyodon %>% 
+  rename("P1 location" = p1_location_factor_letter,
+         "P2/P3 location" = p2_p3_location_factor_letter,
+         "Randomized percentile" = ecdf_val) %>% 
+  select(`P1 location`, `P2/P3 location`, `Randomized percentile`) %>% 
+  left_join(x = processed_table_info$type_b$diagramma$polyodon, y = ., by = c("P1 location", "P2/P3 location")) %>% 
+  mutate(`P1 location` = factor(`P1 location`, levels = LETTERS[1:10]) ) %>% 
+  arrange(`P1 location`, `P2/P3 location`)
 
 
 dstat_table_df_list <- lapply(setNames(nm = c('kazumbe', 'polyodon')), function(SPECIES, processed_table_info) {
@@ -564,10 +705,10 @@ dstat_table_df_list <- lapply(setNames(nm = c('kazumbe', 'polyodon')), function(
     left_join(., processed_table_info$type_a$green[[SPECIES]], by = c("P1 location", "P2/P3 location"))
   
   colnames(species_table_df) <- c('P1 location', 'P2/P3 location',
-                                        'D', 'Z-score',
-                                        'D', 'Z-score',
-                                        'D', 'Z-score',
-                                        'D', 'Z-score')
+                                  'D', 'Z-score', 'Randomized percentile',
+                                  'D', 'Z-score',
+                                  'D', 'Z-score',
+                                  'D', 'Z-score')
   return(species_table_df)
   
 }, processed_table_info = processed_table_info)
@@ -583,26 +724,32 @@ latex_table_list <- lapply(setNames(nm = c('kazumbe', 'polyodon')), function(SPE
   a_top_label <- paste0('topology ', species_number, 'a')
   b_top_label <- paste0('topology ', species_number, 'b')
   
-  topology_label <- c(" ", " ", a_top_label = 4, b_top_label = 4)
+  #topology_label <- c(" ", " ", a_top_label = 4, b_top_label = 4)
+  topology_label <- c(" ", " ", a_top_label = 5, b_top_label = 4)
   names(topology_label) <- c(" ", " ", a_top_label, b_top_label)
   
   kbl(table_list[[SPECIES]], 'latex', caption = caption_list[[SPECIES]], longtable = TRUE, booktabs = TRUE, align = "c") %>% 
-    add_header_above(c(" ", " ", "S. diagramma" = 2, "P. green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>% 
+    add_header_above(c(" ", " ", "S. diagramma" = 3, "P. green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>% 
+    ##add_header_above(c(" ", " ", "S. diagramma" = 2, "P. green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>% 
     #add_header_above(c(" ", " ", a_top_label = 4, b_top_label = 4)) %>%
     add_header_above(header = topology_label) %>%
-    kable_styling(font_size = 8)
+    kable_styling(font_size = 6)
   
 }, table_list = dstat_table_df_list, caption_list = table_caption)
 
 latex_table_list_kazumbe <- kbl(dstat_table_df_list$kazumbe, 'latex', caption = "caption", longtable = TRUE, booktabs = TRUE, align = "c") %>% 
-  add_header_above(c(" ", " ", "diagramma" = 2, "green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>% 
-  add_header_above(c(" ", " ", "topology 1a" = 4, "topology 1b" = 4)) %>%
-  kable_styling(font_size = 8)
+  #add_header_above(c(" ", " ", "diagramma" = 2, "green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>% 
+  #add_header_above(c(" ", " ", "topology 1a" = 4, "topology 1b" = 4)) %>%
+  add_header_above(c(" ", " ", "S. diagramma" = 3, "P. green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>%
+  add_header_above(c(" ", " ", "topology 1a" = 5, "topology 1b" = 4)) %>%
+  kable_styling(font_size = 7)
 
 latex_table_list_polyodon <- kbl(dstat_table_df_list$polyodon, 'latex', caption = "caption", longtable = TRUE, booktabs = TRUE, align = "c") %>% 
-  add_header_above(c(" ", " ", "diagramma" = 2, "green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>% 
-  add_header_above(c(" ", " ", "topology 2a" = 4, "topology 2b" = 4)) %>%
-  kable_styling(font_size = 8)
+  #add_header_above(c(" ", " ", "diagramma" = 2, "green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>% 
+  #add_header_above(c(" ", " ", "topology 2a" = 4, "topology 2b" = 4)) %>%
+  add_header_above(c(" ", " ", "S. diagramma" = 3, "P. green" = 2, "S. diagramma" = 2, "P. green" = 2)) %>% 
+  add_header_above(c(" ", " ", "topology 2a" = 5, "topology 2b" = 4)) %>%
+  kable_styling(font_size = 7)
 
 cat(latex_table_list_kazumbe, file = here('tables', 'kazumbe_dstat_table.txt'), append = FALSE)
 cat(latex_table_list_polyodon, file = here('tables', 'polyodon_dstat_table.txt'), append = FALSE)
@@ -797,8 +944,387 @@ cat(mantel_test_table_final, file = here('tables', 'dstat_mantel_test_table.txt'
 
 
 
+################
+#####
+
+#"#9358A7", '#c2a5cf', "#a6a6a6", "#a6dba0", "#309D5D"
+
+
+kazumbe_corrplot_title <- expression(paste(italic("Petrochromis"), " sp. 'kazumbe' (Pk)", sep = ""))
+polyodon_corrplot_title <- expression(paste(italic("Petrochromis"), " cf. ",  italic("polyodon"), " (Pp)", sep = ""))
+
+scaleFUN <- function(x) sprintf("%.0f", x)
+title_list <- list(kazumbe = kazumbe_corrplot_title,
+                   polyodon = polyodon_corrplot_title)
+
+
+dstat_df_list_random$diagramma$kazumbe
+
+#full_plot_list_rand <- list()
+#for (type in names(dstat_df_list)) {
+  outgroup_plot_list_rand <- list()
+  
+  for (out in names(dstat_df_list_random)) {
+    taxa_plot_list <- list()
+    
+    for (taxa in names(dstat_df_list_random[[out]])) {
+      matrix_plot <- ggplot(data = dstat_df_list_random[[out]][[taxa]], 
+                            aes(x = p2_p3_location_factor_letter, y = p1_location_factor_letter)) + 
+        geom_tile(fill = 'white') +
+        #scale_y_discrete(limits = rev(levels(dstat_df_list_random[[out]][[taxa]]$p1_location_factor_letter))) +
+        geom_point(aes(size = D_absolute), 
+        #geom_point(aes(size = z_score_absolute), 
+                   color = dstat_df_list_random[[out]][[taxa]]$color_ecdf, 
+                   fill = dstat_df_list_random[[out]][[taxa]]$color_ecdf) +
+        scale_size_continuous(range = c(3, 23)) +
+        theme(plot.background = element_rect(fill = "white"), 
+              panel.background = element_rect(fill = "white"),
+              #panel.border = element_rect(colour = "gray", fill=NA, size=1),
+              axis.text.x = element_text(angle = 0, vjust = 0.5, hjust = 0.5, size = 19),
+              axis.text.y = element_text(size = 19),
+              axis.ticks = element_blank(),
+              axis.title = element_text(size = 21),
+              axis.title.y = element_text(margin = margin(t = 0, r = 7, b = 0, l = 0)),
+              axis.title.x = element_text(margin = margin(t = 7, r = 0, b = 0, l = 0)),
+              plot.title = element_blank(),
+              legend.position = "none",
+              plot.margin = margin(-2, 0, 5.5, 5.5)) +
+        xlab("P2 population") + ylab("P1 population")
+      
+      bar_plot <- ggplot(data = dstat_df_list_random[[out]][[taxa]] %>% 
+                           mutate(bar = 1,
+                                  group = factor(case_when(sig_level == '95' & D < 0 ~ "group1",
+                                                           sig_level == '90' & D < 0 ~ "group2",
+                                                           sig_level == 'none_negative' ~ "group3",
+                                                           sig_level == 'none_positive' ~ "group4",
+                                                           sig_level == '90' & D > 0 ~ "group5",
+                                                           sig_level == '95' & D > 0 ~ "group6"), levels = paste0('group', 6:1))), 
+                         aes(x = p2_p3_location_factor_letter, y = bar, fill = group) ) +
+        geom_bar(position = "fill", stat = "identity", width = 0.9)  +
+        scale_fill_manual("legend", values = c("group1" = "#512A5E", 
+                                               "group2" =  "#9358A7",
+                                               "group3" =  "#CFB5D8",
+                                               "group4" =  "#BADEC9", 
+                                               "group5" =  "#309D5D",
+                                               "group6" =  "#0F582D")) +
+        theme(plot.background = element_rect(fill = "white"), 
+              panel.background = element_rect(fill = "white"),
+              axis.text.x = element_blank(),
+              axis.title.x = element_blank(),
+              #axis.text.y = element_text(size = 13, color = 'white'),
+              axis.title.y = element_text(color = 'white'),
+              axis.text.y = element_blank(),
+              axis.ticks = element_blank(),
+              axis.title = element_text(size = 21),
+              plot.title = element_text(size = 24, hjust = 0.5),
+              legend.position = "none",
+              plot.margin = margin(5.5, 0, 0, 27)) + #originally right was 5.5
+        scale_y_continuous(labels = scaleFUN, expand = c(0, 0)) +
+        ggtitle(title_list[[taxa]])
+      
+      taxa_plot_list[[taxa]] <- ggarrange(bar_plot, 
+                                          matrix_plot, 
+                                          ncol = 1, heights = c(0.4, 1.7))
+    }
+    outgroup_plot_list_rand[[out]] <- taxa_plot_list
+  }
+#  full_plot_list_rand[[type]] <- outgroup_plot_list
+#}
+
+
+  
+  
+  ########################
+  ### CREATING LEGENDS ###
+  ########################
+  
+segment_df <- data.frame(x1 = c(qnorm(0.025), qnorm(0.05), qnorm(0.5), qnorm(0.95), qnorm(0.975)),
+                         y1 = rep(0, 5),
+                         y2 = 0.04 + c(dnorm(qnorm(0.025)), dnorm(qnorm(0.05)), dnorm(qnorm(0.5)), dnorm(qnorm(0.95)), dnorm(qnorm(0.975)) ))
+  
+# text_df <- data.frame(x = c(qnorm(0.025), qnorm(0.05), qnorm(0.5), qnorm(0.95), qnorm(0.975)),
+#                       y = 0.03 + c(dnorm(qnorm(0.025)), dnorm(qnorm(0.05)), dnorm(qnorm(0.5)), dnorm(qnorm(0.95)), dnorm(qnorm(0.975)) ),
+#                       text = c('2.5', '5', '50', '95', '97.5'))
+
+text_df <- data.frame(x = c(qnorm(0.025), qnorm(0.05), qnorm(0.95), qnorm(0.975)),
+                      y = 0.03 + c(dnorm(qnorm(0.025)), dnorm(qnorm(0.05)), dnorm(qnorm(0.95)), dnorm(qnorm(0.975)) ),
+                      text = c('2.5', '5', '95', '97.5'))
+  
+axis_label_df <- data.frame(x = c(-3.5, 0, 3.5)/2,
+                            y = rep(-0.025, 3),
+                            text = c('-', '0', '+'))
+  
+  
+normal_distribution_legend <- ggplot() +
+    #inner 90
+    stat_function(fun = dnorm,
+                  geom = "area",
+                  fill = "#CFB5D8",
+                  xlim = c(-3.5, qnorm(0.5))) +
+    stat_function(fun = dnorm,
+                  geom = "area",
+                  fill = "#BADEC9",
+                  xlim = c(qnorm(0.5), 3.5)) +
+    #outer 90
+    stat_function(fun = dnorm,
+                  geom = "area",
+                  fill = "#9358A7",
+                  xlim = c(-3.5, qnorm(.05))) +
+    stat_function(fun = dnorm,
+                  geom = "area",
+                  fill = "#309D5D",
+                  xlim = c(qnorm(.95), 3.5))   +
+    #outer 95
+    stat_function(fun = dnorm,
+                  geom = "area",
+                  fill = "#512A5E",
+                  xlim = c(-3.5, qnorm(.025))) +
+    stat_function(fun = dnorm,
+                  geom = "area",
+                  fill = "#0F582D",
+                  xlim = c(qnorm(.975), 3.5)) +
+    geom_segment(data = segment_df,
+                 aes(x = x1, xend = x1, y = y1, yend = y2),
+                 size = 1.5, color = 'white', linetype = 1) +
+    # geom_segment(data = segment_df,
+    #              aes(x = x1, xend = x1, y = y1, yend = y2),
+    #              size = 1.5, color = 'black', linetype = 1,
+    #              arrow = arrow(type = "closed", length = unit(0.5, "cm"))) +
+    geom_text(data = text_df, 
+              aes(x = x, y = y, label = text),
+              #hjust = c('right', 'right', 'middle', 'left', 'left'), #if 0.50 is included
+              hjust = c('right', 'right', 'left', 'left'),
+              #hjust = 'middle',
+              size = 7.5) +
+    geom_text(data = axis_label_df, 
+              aes(x = x, y = y, label = text),
+              hjust = 'middle',
+              vjust = 'center',
+              size = c(9, 7.5, 9)) +
+    geom_segment(data = data.frame(x1 = -3.5, x2 = 3.5, y = 0 ),
+                 aes(x = x1, xend = x2, y = y, yend = y),
+                 linetype = 'solid', color = 'black', size = 1) +
+    scale_y_continuous(expand = c(0, 0.025)) +
+    xlim(-3.5, 3.5) +
+    theme_void() +
+    theme(axis.title.x = element_text(color = 'black', face = 'plain', size = 21.5)) +
+    #      #axis.line.x = element_line(color = 'black')) +
+    xlab('D statistic') +
+    coord_cartesian(clip = 'off')
+  
+pos_neg_legend_vertical <- ggplot(data = data.frame(x = c(1, 1),
+                                                    x_end = c(1, 1),
+                                                    y = c(-0.25, 15.25),
+                                                    y_end = c(15.25, -0.25)) ) +
+  geom_segment(aes(x = x, y = y, xend = x_end, yend = y_end),
+               arrow = arrow(length = unit(0.325, "cm"), type = "closed"), size = 1.75) +
+  geom_rect(aes(xmin = 0.92, xmax = 1.08, ymin = 7.5 - 0.11, ymax = 7.5 + 0.11), color = "black", fill = "black") +
+  geom_point(data = data.frame(x = 1.6,
+                               y = c(0, 2.5, 5, 7.5, 10, 12.5, 15)), 
+             aes(x = x, y = y), 
+             size = c(13, 10, 7, 3.5, 7, 10, 13),
+             color = c("#512A5E", "#9358A7", "#CFB5D8", "#a6a6a6", "#BADEC9", "#309D5D", "#0F582D")) +
+  geom_text(data = data.frame(x = 0.5,
+                              y = c(0, 2.5, 5, 7.5, 10, 12.5, 15)), 
+            aes(x = x, y = y),
+            label = c('-', NA, NA, '0', NA, NA, '+'), size = c(9, 7, 7, 7, 7, 7, 9), hjust = 0.5, vjust = 0.5) +
+  theme_void() +
+  theme(plot.margin = margin(5, 0, 5, 3.5)) +
+  xlim(0.3, 2.1) +
+  coord_cartesian(clip = 'off')
+
+
+z_legend <- ggplot(data.frame(x = c(0, 0, 0, 1, 1, 1),
+                              y = c(0, 1, 2, 0, 1, 2))) +
+  geom_point(aes(x = x, y = y), size = c(13, 13, 13, 13, 13, 13), color = c("#CFB5D8", "#9358A7", "#512A5E", "#BADEC9", "#309D5D", "#0F582D")) +
+  xlim(-0.45, 3.55) + ylim(-0.5, 2.5) +
+  geom_text(data = data.frame(x = 2.5, y = c(0, 1, 2)), 
+            aes(x = x, y = y), 
+            label = c('Within mid. 90%', 'Outside mid. 90%', 'Outside mid. 95%'), size = 6, vjust = 0.5, hjust = 0.5) +
+  theme_void()
+
+empty_plot <- ggplot() + theme_void()
+
+
+
+
+#kazumbe_corrplot_title <- expression(paste(italic("P. kazumbe"), " (Pk)"))
+#polyodon_corrplot_title <- expression(paste(italic("P. polyodon"), " (Pp)"))
+kazumbe_corrplot_title <- expression(paste(italic("P"), ". sp. 'kazumbe' (Pk)", sep = ""))
+polyodon_corrplot_title <- expression(paste(italic("P"), ". cf. ",  italic("polyodon"), " (Pp)", sep = ""))
+
+
+
+title_list <- list(kazumbe = kazumbe_corrplot_title,
+                   polyodon = polyodon_corrplot_title)
+
+#to add spaces, use ~~
+tip_label_list_typea <- list(kazumbe = c('P1: Pk[pop1]', 'P2: Pk[pop2]', 'P3: Pp[full]', 'Outgroup'),
+                             polyodon = c('P1: Pp[pop1]', 'P2: Pp[pop2]', 'P3: Pk[full]', 'Outgroup'))
+
+tip_label_list_typeb <- list(kazumbe = c('P1: Pk[pop1]', 'P2: Pk[pop2]', 'P3: Pp[pop2]', 'Outgroup'),
+                             polyodon = c('P1: Pp[pop1]', 'P2: Pp[pop2]', 'P3: Pk[pop2]', 'Outgroup'))
+
+tree_plot_legend_list_typea <- list()
+tree_plot_legend_list_typeb <- list()
+
+for (i in c('polyodon', 'kazumbe')) {
+  
+  tree_plot_legend_list_typea[[i]] <- ggplot(data.frame(x_start = c(15,   10,  5, 10,  20, 30),
+                                                        y_start = c(0,   10,  20,  30,   30,  30),
+                                                        x_end =   c(10, 5, 0,    5, 10, 15),
+                                                        y_end =   c(10, 20,  30,   20,  10,  0))) +
+    geom_segment(aes(x = x_start, y = y_start, xend = x_end, yend = y_end), size = 2.5, lineend = 'round') +
+    geom_text(data = data.frame(x = c(0, 10, 20, 30),
+                                y = 33),
+              aes(x = x, y = y),
+              label = tip_label_list_typea[[i]],
+              size = 5, parse = TRUE) + #size originally 5
+    geom_segment(data = data.frame(x_start = c(25/3, 55/3, 10/3, 50/3),
+                                   y_start = c(80/3, 80/3, 70/3, 70/3),
+                                   x_end =   c(55/3, 25/3, 50/3, 10/3),
+                                   y_end =   c(80/3, 80/3, 70/3, 70/3)),
+                 aes(x = x_start, y = y_start, xend = x_end, yend = y_end),
+                 arrow = arrow(length = unit(0.325, "cm"), type = "closed"), 
+                 size = 1.75, color = c("#9358A7", "#9358A7", "#309D5D", "#309D5D")) +
+    xlim(-5, 33) +
+    theme_void() +
+    ggtitle(title_list[[i]]) +
+    theme(plot.title = element_text(size = 22, hjust = 0.5, margin = margin(0, 0, 2, 0))) +
+    coord_cartesian(clip = 'off')
+  
+  tree_plot_legend_list_typeb[[i]] <- ggplot(data.frame(x_start = c(15,   10,  5, 10,  20, 30),
+                                                        y_start = c(0,   10,  20,  30,   30,  30),
+                                                        x_end =   c(10, 5, 0,    5, 10, 15),
+                                                        y_end =   c(10, 20,  30,   20,  10,  0))) +
+    geom_segment(aes(x = x_start, y = y_start, xend = x_end, yend = y_end), size = 2.5, lineend = 'round') +
+    geom_text(data = data.frame(x = c(0, 10, 20, 30),
+                                y = 33),
+              aes(x = x, y = y),
+              label = tip_label_list_typeb[[i]],
+              size = 5, parse = TRUE) + #size originally 5.5
+    geom_segment(data = data.frame(x_start = c(25/3, 55/3, 10/3, 50/3),
+                                   y_start = c(80/3, 80/3, 70/3, 70/3),
+                                   x_end =   c(55/3, 25/3, 50/3, 10/3),
+                                   y_end =   c(80/3, 80/3, 70/3, 70/3)),
+                 aes(x = x_start, y = y_start, xend = x_end, yend = y_end),
+                 arrow = arrow(length = unit(0.325, "cm"), type = "closed"), 
+                 size = 1.75, color = c("#9358A7", "#9358A7", "#309D5D", "#309D5D")) +
+    xlim(-5, 33) +
+    theme_void() +
+    ggtitle(title_list[[i]]) +
+    theme(plot.title = element_text(size = 21, hjust = 0.5, margin = margin(0, 0, 2, 0))) +
+    coord_cartesian(clip = 'off')
+  
+}
+
+
+### creating legends ###
+tree_multipanel_typea <- plot_grid(tree_plot_legend_list_typea$kazumbe, empty_plot, tree_plot_legend_list_typea$polyodon, 
+                                   nrow = 3, rel_heights = c(0.45, 0.08, 0.45))
+
+tree_multipanel_typeb <- plot_grid(tree_plot_legend_list_typeb$kazumbe, empty_plot, tree_plot_legend_list_typeb$polyodon, 
+                                   nrow = 3, rel_heights = c(0.45, 0.08, 0.45))
+
+# pos_neg_plus_tree_typea <- plot_grid(plot_grid(empty_plot, pos_neg_legend_vertical, empty_plot, 
+#                                                rel_heights = c(0.2, 0.6, 0.15), ncol = 1), 
+#                                      tree_multipanel_typea, ncol = 2, rel_widths = c(0.32, 0.73))
+
+
+# right_legend <- plot_grid(empty_plot,
+#                           plot_grid(empty_plot, pos_neg_legend_vertical, empty_plot, rel_heights = c(0.23, 0.6, 0.1), ncol = 1) + theme(plot.margin = margin(0, 20, 0, 18)),
+#                           plot_grid(empty_plot, z_legend, empty_plot, rel_widths = c(0.02, 0.65, 0.02), ncol = 3),
+#                           empty_plot,
+#                           ncol = 1, 
+#                           rel_heights = c(0.02, 0.8, 0.25, 0.08)) + theme(plot.margin = margin(0, 0, 0, 5))
+# 
+
+point_size_legend <- ggplot() +
+  geom_point(data = data.frame(x = c(-7.5, -3.75, 0, 3.75, 7.5),
+                               y = 1.5), 
+             aes(x = x, y = y), 
+             size = c(17, 9.5, 2, 9.5, 17),
+             color = 'black') +
+  geom_segment(data = data.frame(x1 = 0, x2 = 7.5, y = 0),
+               aes(x = x1, y = y, xend = x2, yend = y),
+               arrow = arrow(length = unit(0.325, "cm"), type = "closed"), size = 1.75) +
+  geom_segment(data = data.frame(x1 = 0, x2 = -7.5, y = 0),
+               aes(x = x1, y = y, xend = x2, yend = y),
+               arrow = arrow(length = unit(0.325, "cm"), type = "closed"), size = 1.75) +
+  geom_rect(aes(xmin = -0.11, xmax = 0.11, ymin = -0.22, ymax = 0.22), color = "black", fill = "black") +
+  geom_text(data = data.frame(x = c(-7.5, 0, 7.5), y = c(-1, -1, -1), text = c('-', '0', '+')),
+            aes(x = x, y = y, label = text),
+            size = c(9, 7.5, 9) ) +
+  theme_void() +
+  theme(axis.title.x = element_text(color = 'black', size = 21.5),
+        plot.margin = margin(30, 45, 10, 38)) +
+  xlab('D statistic') +
+  ylim(-1.5, 2.7) +
+  coord_cartesian(clip = 'off')
+
+
+right_legend <- plot_grid(empty_plot,
+                          normal_distribution_legend,
+                          point_size_legend,
+                          empty_plot,
+                          ncol = 1, 
+                          rel_heights = c(0.15, 0.55, 0.3, 0.15))
+  
+  
+  
+
+ 
+#right_legend 
+
+#type a with S. diagramma outgroup
+plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel_heights = c(0.08, 0.8, 0.08)), 
+          plot_grid(outgroup_plot_list_rand$diagramma$kazumbe, 
+                    outgroup_plot_list_rand$diagramma$polyodon, 
+                    nrow = 1, labels = c("(b)", "(c)"), label_size = 26, vjust = 1), right_legend, 
+          ncol = 3, rel_widths = c(0.25, 0.79, 0.23), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
+  theme(plot.margin = margin(4, 0, 0, 0))
+
+ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE_RANDOM.png'), 
+        width = 19*1.15, height = 8*1.15, bg = 'white')
+
+
+plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel_heights = c(0.08, 0.8, 0.08)), 
+          plot_grid(outgroup_plot_list_rand$green$kazumbe, 
+                    outgroup_plot_list_rand$green$polyodon, 
+                    nrow = 1, labels = c("(b)", "(c)"), label_size = 26, vjust = 1), right_legend, 
+          ncol = 3, rel_widths = c(0.25, 0.79, 0.23), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
+  theme(plot.margin = margin(4, 0, 0, 0))
+
+ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE_RANDOM.png'), 
+        width = 19*1.15, height = 8*1.15, bg = 'white')
+
+
+
+
+
+
+
+# [1] "polyodon_Hilltop"     "polyodon_Jakob"      
+# [3] "polyodon_Kalala"      "polyodon_Katongwe_N" 
+# [5] "polyodon_Katongwe_S"  "polyodon_Nondwa"     
+# [7] "polyodon_Ska"         "polyodon_Gombe_South"
+  
+rand_list$polyodon %>% 
+  filter(P1 == "polyodon_Jakob",
+         P2 == "polyodon_Ska",
+         outgroup == 'diagramma') %>% 
+  ggplot() +
+  geom_histogram(aes(x = D)) +
+  geom_vline(data = full_data_list$type_b$polyodon %>% 
+               filter(P1 == "polyodon_Jakob",
+                      P2 == "polyodon_Ska",
+                      outgroup == 'diagramma'),
+             aes(xintercept = D), color = 'red')
+
+
+
 ################################################################
-### 6. MISCELLANEOUS (CODE THAT IS CURRENTLY NOT BEING USED) ###
+### 8. MISCELLANEOUS (CODE THAT IS CURRENTLY NOT BEING USED) ###
 ################################################################
 
 ### ALTERNATIVE PLOT SET-UP ###

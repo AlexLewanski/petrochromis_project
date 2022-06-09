@@ -373,6 +373,7 @@ plot_demographic_mod <- function(par,
                                  pop_colors = NULL,
                                  scale_pops = TRUE,
                                  pop_color = 'gray',
+                                 mig_band_color = "#bfbfbf",
                                  generic_plotting = FALSE,
                                  max_arrow_head_size = 0.15,
                                  min_arrow_head_size = 0.05,
@@ -405,28 +406,32 @@ plot_demographic_mod <- function(par,
     filter(migrants == 1) %>%
     filter(source != sink)
   
+  #UNCOMMENTED THIS
   # if (scale_pops) {
   #   pops_rel_ne <- rescale(data$pop_size, 0.5, 1.2)
   #   #root_rel_ne <- rescale(div_events$new_deme_size[div_events$time == max(div_events$time)]*data$pop_size[1], 0.5, 1.2)
   #   root_rel_ne <- rescale(div_events$new_deme_size[div_events$time == max(div_events$time)]*data$pop_size[div_events$sink + 1], 0.5, 1.2)
   #   div_events$source_rel_ne <- pops_rel_ne[div_events$source + 1]
   #   div_events$sink_rel_ne <- pops_rel_ne[div_events$sink + 1]
-  #   
+  # 
   #   mig_events$source_rel_ne <- pops_rel_ne[mig_events$source + 1]
   #   mig_events$sink_rel_ne <- pops_rel_ne[mig_events$sink + 1]
   # }
   
-  if (scale_pops == TRUE) {
+  #COMMENTED THIS
+  if (isTRUE(scale_pops)) {
+
     pops_rel_ne <- rescale_alt(data$pop_size, 0.5, 1.2, pop_size_vec = c(data$pop_size, div_events$new_deme_size[div_events$time == max(div_events$time)]*data$pop_size[div_events$sink + 1]) )
+
     #root_rel_ne <- rescale(div_events$new_deme_size[div_events$time == max(div_events$time)]*data$pop_size[1], 0.5, 1.2)
     root_rel_ne <- rescale_alt( div_events$new_deme_size[div_events$time == max(div_events$time)]*data$pop_size[div_events$sink + 1], 0.5, 1.2, pop_size_vec = c(data$pop_size, div_events$new_deme_size[div_events$time == max(div_events$time)]*data$pop_size[div_events$sink + 1]) )
     div_events$source_rel_ne <- pops_rel_ne[div_events$source + 1]
     div_events$sink_rel_ne <- pops_rel_ne[div_events$sink + 1]
-    
+
     mig_events$source_rel_ne <- pops_rel_ne[mig_events$source + 1]
     mig_events$sink_rel_ne <- pops_rel_ne[mig_events$sink + 1]
   }
-  
+
   
   
   ##########################################
@@ -437,31 +442,76 @@ plot_demographic_mod <- function(par,
   troot <- max(events$time)*1.33
   
   p <- ggplot() +
-    xlim(0,length(data$pop_size)*1.5)+
+    #xlim(0,length(data$pop_size)*1.5) +
     ylim(0,troot)
   
-  width <- 0.75
+  #width <- 0.75
+  width <- 0.6
   if (scale_pops) {
     if (nrow(div_events) == 1){
-      p1 <- p + 
+      #UNCOMMENTED THIS
+      # p1 <- p +
+      #   geom_rect(mapping=aes(xmin=min(div_events$source[1],div_events$sink[1]) + 1 - width*pops_rel_ne[1]/2,
+      #                         xmax=max(div_events$source[1],div_events$sink[1]) + 1 + width*pops_rel_ne[2]/2,
+      #                         ymin=div_events$time[1],ymax=div_events$time[1]-tgap), fill=pop_color) +
+      #   # root
+      #   geom_rect(mapping=aes(xmin=(div_events$source[1]+div_events$sink[1]+2)/2 - width*root_rel_ne/2,
+      #                         xmax=(div_events$source[1]+div_events$sink[1]+2)/2 + width*root_rel_ne/2,
+      #                         ymin=div_events$time[1],
+      #                         ymax=troot), fill=pop_color) +
+      #   # pop0
+      #   geom_rect(mapping=aes(xmin=div_events$source[1] + 1 - width*pops_rel_ne[1]/2,
+      #                         xmax=div_events$source[1] + 1 + width*pops_rel_ne[1]/2,
+      #                         ymin=0,
+      #                         ymax=div_events$time[1]), fill=pop_color) +
+      #   # pop1
+      #   geom_rect(mapping=aes(xmin=div_events$sink[1] + 1 - width*pops_rel_ne[2]/2,
+      #                         xmax=div_events$sink[1] + 1 + width*pops_rel_ne[2]/2,
+      #                         ymin=0,
+      #                         ymax=div_events$time[1]), fill=pop_color)
+      
+      #COMMENTED THIS
+      # p1 <- p +
+      #   geom_rect(mapping=aes(xmin=min(div_events$source[1],div_events$sink[1]) + 1 - width*pops_rel_ne[1]/2,
+      #                         xmax=max(div_events$source[1],div_events$sink[1]) + 1 + width*pops_rel_ne[2]/2,
+      #                         ymin=div_events$time[1],ymax=div_events$time[1]-tgap), fill=pop_color) +
+      #   # root
+      #   geom_rect(mapping=aes(xmin=(div_events$source[1]+div_events$sink[1]+2)/2 - width*root_rel_ne/2,
+      #                         xmax=(div_events$source[1]+div_events$sink[1]+2)/2 + width*root_rel_ne/2,
+      #                         ymin=div_events$time[1],
+      #                         ymax=troot), fill=pop_color) +
+      #   # pop0
+      #   geom_rect(mapping=aes(xmin=div_events$source[1] + 0.9 - width*pops_rel_ne[1]/2,
+      #                         xmax=div_events$source[1] + 0.9 + width*pops_rel_ne[1]/2,
+      #                         ymin=0,
+      #                         ymax=div_events$time[1]), fill=pop_color) +
+      #   # pop1
+      #   geom_rect(mapping=aes(xmin=div_events$sink[1] + 1.1 - width*pops_rel_ne[2]/2,
+      #                         xmax=div_events$sink[1] + 1.1 + width*pops_rel_ne[2]/2,
+      #                         ymin=0,
+      #                         ymax=div_events$time[1]), fill=pop_color)
+      
+      #4/1/2022
+      p1 <- p +
         geom_rect(mapping=aes(xmin=min(div_events$source[1],div_events$sink[1]) + 1 - width*pops_rel_ne[1]/2,
                               xmax=max(div_events$source[1],div_events$sink[1]) + 1 + width*pops_rel_ne[2]/2,
-                              ymin=div_events$time[1],ymax=div_events$time[1]-tgap), fill=pop_color) + 
+                              ymin=div_events$time[1],ymax=div_events$time[1]-tgap), fill=pop_color) +
         # root
         geom_rect(mapping=aes(xmin=(div_events$source[1]+div_events$sink[1]+2)/2 - width*root_rel_ne/2,
                               xmax=(div_events$source[1]+div_events$sink[1]+2)/2 + width*root_rel_ne/2,
                               ymin=div_events$time[1],
-                              ymax=troot), fill=pop_color) + 
+                              ymax=troot), fill=pop_color) +
         # pop0
-        geom_rect(mapping=aes(xmin=div_events$source[1] + 1 - width*pops_rel_ne[1]/2,
-                              xmax=div_events$source[1] + 1 + width*pops_rel_ne[1]/2,
+        geom_rect(mapping=aes(xmin= 0 + 0.9 - width*pops_rel_ne[1]/2,
+                              xmax= 0 + 0.9 + width*pops_rel_ne[1]/2,
                               ymin=0,
                               ymax=div_events$time[1]), fill=pop_color) +
         # pop1
-        geom_rect(mapping=aes(xmin=div_events$sink[1] + 1 - width*pops_rel_ne[2]/2,
-                              xmax=div_events$sink[1] + 1 + width*pops_rel_ne[2]/2,
+        geom_rect(mapping=aes(xmin= 1 + 1.1 - width*pops_rel_ne[2]/2,
+                              xmax= 1 + 1.1 + width*pops_rel_ne[2]/2,
                               ymin=0,
                               ymax=div_events$time[1]), fill=pop_color)
+      
       #print(p1)
       
     } else if (nrow(div_events) == 2) { 
@@ -555,16 +605,34 @@ plot_demographic_mod <- function(par,
   
   
   if (scale_pops) {
-    pop0_x_left <- div_events$source[1] + 1 - width*pops_rel_ne[1]/2
-    pop0_x_right <- div_events$source[1] + 1 + width*pops_rel_ne[1]/2
-    pop1_x_left <- div_events$sink[1] + 1 - width*pops_rel_ne[2]/2
-    pop1_x_right <-div_events$sink[1] + 1 + width*pops_rel_ne[2]/2
+    #UNCOMMENTED THIS
+    # pop0_x_left <- div_events$source[1] + 1 - width*pops_rel_ne[1]/2
+    # pop0_x_right <- div_events$source[1] + 1 + width*pops_rel_ne[1]/2
+    # pop1_x_left <- div_events$sink[1] + 1 - width*pops_rel_ne[2]/2
+    # pop1_x_right <-div_events$sink[1] + 1 + width*pops_rel_ne[2]/2
+    
+    #COMMENTED THIS
+    # pop0_x_left <- div_events$source[1] + 0.9 - width*pops_rel_ne[1]/2
+    # pop0_x_right <- div_events$source[1] + 0.9 + width*pops_rel_ne[1]/2
+    # pop1_x_left <- div_events$sink[1] + 1.1 - width*pops_rel_ne[2]/2
+    # pop1_x_right <-div_events$sink[1] + 1.1 + width*pops_rel_ne[2]/2
+    
+    #4/1/2022
+    pop0_x_left <- 0 + 0.9 - width*pops_rel_ne[1]/2
+    pop0_x_right <- 0 + 0.9 + width*pops_rel_ne[1]/2
+    pop1_x_left <- 1 + 1.1 - width*pops_rel_ne[2]/2
+    pop1_x_right <-1 + 1.1 + width*pops_rel_ne[2]/2
     
   } else {
-    pop0_x_left <- div_events$source[1] + 1 - width/2
-    pop0_x_right <- div_events$source[1] + 1 + width/2
-    pop1_x_left <- div_events$sink[1] + 1 - width/2
-    pop1_x_right <- div_events$sink[1] + 1 + width/2
+    # pop0_x_left <- div_events$source[1] + 1 - width/2
+    # pop0_x_right <- div_events$source[1] + 1 + width/2
+    # pop1_x_left <- div_events$sink[1] + 1 - width/2
+    # pop1_x_right <- div_events$sink[1] + 1 + width/2
+    
+    pop0_x_left <- 0 + 1 - width/2
+    pop0_x_right <- 0 + 1 + width/2
+    pop1_x_left <- 1 + 1 - width/2
+    pop1_x_right <- 1 + 1 + width/2
   }
   
   
@@ -716,8 +784,9 @@ plot_demographic_mod <- function(par,
       geom_rect(data = migration_period,
                 aes(xmin = pop0_x_right, 
                     xmax = pop1_x_left, 
-                    ymin = start, ymax = end), 
-                color = NA, fill = "#bfbfbf", alpha=0.5)
+                    ymin = start, 
+                    ymax = end), 
+                color = NA, fill = mig_band_color, alpha = 1)
     
   } else {
     p3 <- p2
@@ -732,7 +801,6 @@ plot_demographic_mod <- function(par,
   #                 xmax = pop1_x_left, 
   #                 ymin = start, ymax = end), 
   #             color = NA, fill = "#bfbfbf", alpha=0.5)
-  
   
   if (length(migmat_arrow_info_list_filtered) != 0) {
     for (i in seq_len(length(migmat_arrow_info_list_filtered))) {
@@ -768,7 +836,7 @@ plot_demographic_mod <- function(par,
                      aes(x = pop0_x_left, xend = pop1_x_right,
                          y=time, yend=time),
                      lty=2, size = 1.25, lineend = "round") +
-        geom_text(aes(x = pop1_x_right*1.02,
+        geom_text(aes(x = pop1_x_right*1.05,
                       y = data$hist_event_info$processed_hist_events$time, label = formatC(data$hist_event_info$processed_hist_events$time, format = "d", big.mark = ",")), size = label_size, hjust = 0) +
         coord_cartesian(clip = 'off')
       #xlim(pop0_x_left, pop1_x_right*1.1)
@@ -920,17 +988,23 @@ migmat_arrow_info_alt <- function(mig_mat,
 
 
 
+
+
+
+
+
 plot_demographic_mod_popgrow <- function(par,
-                                 colors = TRUE,
-                                 pop_colors = NULL,
-                                 scale_pops = TRUE,
-                                 pop_color = 'gray',
-                                 generic_plotting = FALSE,
-                                 max_arrow_head_size = 0.15,
-                                 min_arrow_head_size = 0.05,
-                                 generic_arrow_head_size = 0.15,
-                                 label_size = 7,
-                                 perspective = c('forward', 'backward')) {
+                                         colors = TRUE,
+                                         pop_colors = NULL,
+                                         scale_pops = TRUE,
+                                         pop_color = 'gray',
+                                         generic_plotting = FALSE,
+                                         max_arrow_head_size = 0.15,
+                                         min_arrow_head_size = 0.05,
+                                         generic_arrow_head_size = 0.15,
+                                         label_size = 7,
+                                         label_nudge = 0,
+                                         perspective = c('forward', 'backward')) {
   
   scale_pops <- scale_pops & !generic_plotting
   
@@ -989,13 +1063,23 @@ plot_demographic_mod_popgrow <- function(par,
   pop_poly_list <- lapply(1:2, function(X, pops_rel_ne, hist_pops_rel_ne, width, div_events) {
     
     data.frame(y = rep(c(0, div_events$time[1]), each  = 2),
-               x = c(div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 - width*pops_rel_ne[X]/2,
-                     div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 + width*pops_rel_ne[X]/2,
-                     div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 + width*hist_pops_rel_ne[X]/2,
-                     div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 - width*hist_pops_rel_ne[X]/2))
+              # x = c(div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 - width*pops_rel_ne[X]/2,
+              #       div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 + width*pops_rel_ne[X]/2,
+              #       div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 + width*hist_pops_rel_ne[X]/2,
+              #       div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 - width*hist_pops_rel_ne[X]/2)
+              x = c((X - 1) + 1 - width*pops_rel_ne[X]/2,
+                    (X - 1) + 1 + width*pops_rel_ne[X]/2,
+                    (X - 1) + 1 + width*hist_pops_rel_ne[X]/2,
+                    (X - 1) + 1 - width*hist_pops_rel_ne[X]/2)
+               )
     
   }, pops_rel_ne = pops_rel_ne, hist_pops_rel_ne = hist_pops_rel_ne, width = width, div_events = div_events)
   
+  #return(pop_poly_list)
+  #3/30/2022
+  #pop_poly_list <- pop_poly_list[match(div_events[c('source', 'sink')], 0:1)]
+  # pop1_pos <- which(div_events[c('source', 'sink')] == 0)
+  # pop2_pos <- which(div_events[c('source', 'sink')] == 1)
   
   
   ############################
@@ -1012,43 +1096,70 @@ plot_demographic_mod_popgrow <- function(par,
   #width <- 0.75
   p1 <- p + 
     geom_rect(mapping=aes(xmin=min(pop_poly_list[[1]][pop_poly_list[[1]]$y != 0,]$x),
-                          xmax=max(pop_poly_list[[2]][pop_poly_list[[1]]$y != 0,]$x),
-                          ymin=div_events$time[1],ymax=div_events$time[1]+tgap), fill=pop_color) + 
+                         xmax=max(pop_poly_list[[2]][pop_poly_list[[1]]$y != 0,]$x),
+                         ymin=div_events$time[1],ymax=div_events$time[1]+tgap), fill=pop_color) +
+    # geom_rect(mapping=aes(xmin=min(pop_poly_list[[pop1_pos]][pop_poly_list[[pop1_pos]]$y != 0,]$x),
+    #                       xmax=max(pop_poly_list[[pop2_pos]][pop_poly_list[[pop2_pos]]$y != 0,]$x),
+    #                       ymin=div_events$time[1],ymax=div_events$time[1]+tgap), fill=pop_color) + 
     # root
     geom_rect(mapping=aes(xmin=(div_events$source[1]+div_events$sink[1]+2)/2 - width*root_rel_ne/2,
                           xmax=(div_events$source[1]+div_events$sink[1]+2)/2 + width*root_rel_ne/2,
                           ymin=div_events$time[1],
                           ymax=troot), fill=pop_color) + 
     geom_polygon(data = pop_poly_list[[1]],
-                 aes(x = x, y = y ), fill=pop_color)  + 
+                 aes(x = x, y = y), fill=pop_color)  +
     geom_polygon(data = pop_poly_list[[2]],
-                 aes(x = x, y = y ), fill=pop_color) 
+                 aes(x = x, y = y), fill=pop_color)
+   # geom_polygon(data = pop_poly_list[[pop1_pos]],
+   #              aes(x = x, y = y), fill=pop_color)  + 
+   # geom_polygon(data = pop_poly_list[[pop2_pos]],
+   #              aes(x = x, y = y), fill=pop_color) 
   
-  ############################
-  # add colors for populations, if desired
-  ############################
+  ########################################## 
+  # add colors for populations, if desired #
+  ##########################################
   if (colors) {
     
     p2 <- p1 +
       geom_polygon(data = rbind(pop_poly_list[[1]][1:2,],
                                 data.frame(y = rep(tgap/2, 2),
-                                           x = c(id_xval(y_val = tgap/2, 
-                                                         pointa = rev(unlist(pop_poly_list[[1]][2,])), 
+                                           x = c(id_xval(y_val = tgap/2,
+                                                         pointa = rev(unlist(pop_poly_list[[1]][2,])),
                                                          pointb = rev(unlist(pop_poly_list[[1]][3,])) ),
-                                                 id_xval(y_val = tgap/2, 
-                                                         pointa = rev(unlist(pop_poly_list[[1]][1,])), 
+                                                 id_xval(y_val = tgap/2,
+                                                         pointa = rev(unlist(pop_poly_list[[1]][1,])),
                                                          pointb = rev(unlist(pop_poly_list[[1]][4,]))) )  )),
                    aes(x = x, y = y), fill = pop_colors[1]) +
       geom_polygon(data = rbind(pop_poly_list[[2]][1:2,],
                             data.frame(y = rep(tgap/2, 2),
-                                       x = c(id_xval(y_val = tgap/2, 
-                                                     pointa = rev(unlist(pop_poly_list[[2]][2,])), 
+                                       x = c(id_xval(y_val = tgap/2,
+                                                     pointa = rev(unlist(pop_poly_list[[2]][2,])),
                                                      pointb = rev(unlist(pop_poly_list[[2]][3,])) ),
-                                             id_xval(y_val = tgap/2, 
-                                                     pointa = rev(unlist(pop_poly_list[[2]][1,])), 
+                                             id_xval(y_val = tgap/2,
+                                                     pointa = rev(unlist(pop_poly_list[[2]][1,])),
                                                      pointb = rev(unlist(pop_poly_list[[2]][4,]))) )  )),
                aes(x = x, y = y ), fill = pop_colors[2] ) #+
   #scale_fill_manual(values=pop.cols)
+    
+    # p2 <- p1 +
+    #   geom_polygon(data = rbind(pop_poly_list[[pop1_pos]][1:2,],
+    #                             data.frame(y = rep(tgap/2, 2),
+    #                                        x = c(id_xval(y_val = tgap/2, 
+    #                                                      pointa = rev(unlist(pop_poly_list[[pop1_pos]][2,])), 
+    #                                                      pointb = rev(unlist(pop_poly_list[[pop1_pos]][3,])) ),
+    #                                              id_xval(y_val = tgap/2, 
+    #                                                      pointa = rev(unlist(pop_poly_list[[pop1_pos]][1,])), 
+    #                                                      pointb = rev(unlist(pop_poly_list[[pop1_pos]][4,]))) )  )),
+    #                aes(x = x, y = y), fill = pop_colors[1]) +
+    #   geom_polygon(data = rbind(pop_poly_list[[pop2_pos]][1:2,],
+    #                             data.frame(y = rep(tgap/2, 2),
+    #                                        x = c(id_xval(y_val = tgap/2, 
+    #                                                      pointa = rev(unlist(pop_poly_list[[pop2_pos]][2,])), 
+    #                                                      pointb = rev(unlist(pop_poly_list[[pop2_pos]][3,])) ),
+    #                                              id_xval(y_val = tgap/2, 
+    #                                                      pointa = rev(unlist(pop_poly_list[[pop2_pos]][1,])), 
+    #                                                      pointb = rev(unlist(pop_poly_list[[pop2_pos]][4,]))) )  )),
+    #                aes(x = x, y = y ), fill = pop_colors[2] ) 
 
   } else {
     p2 <- p1
@@ -1082,6 +1193,21 @@ plot_demographic_mod_popgrow <- function(par,
                             pop0_x = list(pointa = rev(unlist(pop_poly_list[[1]][2,])), pointb = rev(unlist(pop_poly_list[[1]][3,]))),
                             pop1_x = list(pointa = rev(unlist(pop_poly_list[[2]][1,])), pointb = rev(unlist(pop_poly_list[[2]][4,]))),
                             direction = perspective)
+      
+      # migmat_arrow_info_alt(mig_mat = mig_mat[[i]],
+      #                       start_y = time_int_list[[i]]$start,
+      #                       #end_y = div_events$time[1],
+      #                       end_y = time_int_list[[i]]$end,
+      #                       offset = 0.05,
+      #                       arrow_replicates = 1,
+      #                       max_val = NULL,
+      #                       max_arrow_size = 1,
+      #                       min_arrow_size = 0.2,
+      #                       max_arrow_head_size = max_arrow_head_size,
+      #                       min_arrow_head_size = min_arrow_head_size,
+      #                       pop0_x = list(pointa = rev(unlist(pop_poly_list[[pop1_pos]][2,])), pointb = rev(unlist(pop_poly_list[[pop1_pos]][3,]))),
+      #                       pop1_x = list(pointa = rev(unlist(pop_poly_list[[pop2_pos]][1,])), pointb = rev(unlist(pop_poly_list[[pop2_pos]][4,]))),
+      #                       direction = perspective)
     }
     
   }, time_int_list = time_interval_list, mig_mat = data$mig_mat_list)
@@ -1103,15 +1229,25 @@ plot_demographic_mod_popgrow <- function(par,
     #migration_period <- time_interval_list[sapply(data$mig_mat_list, function(x) !all(x == 0) & x != 'NONE')][[1]]
     migration_period <- time_interval_list[sapply(data$mig_mat_list, function(x) !all(x == 0) & any(x != 'NONE'))][[1]]
     
-    p3 <- p2 + 
+    p3 <- p2 +
       geom_polygon(data = data.frame(y = rep(unlist(migration_period[1, c('start', 'end')]), 2),
-                                     x = c(id_xval(y_val = unlist(migration_period[1, c('start', 'end')]), 
-                                                   pointa = rev(unlist(pop_poly_list[[1]][2,])), 
+                                     x = c(id_xval(y_val = unlist(migration_period[1, c('start', 'end')]),
+                                                   pointa = rev(unlist(pop_poly_list[[1]][2,])),
                                                    pointb = rev(unlist(pop_poly_list[[1]][3,])) ),
-                                           id_xval(y_val = unlist(migration_period[1, c('start', 'end')]), 
-                                                   pointa = rev(unlist(pop_poly_list[[2]][1,])), 
+                                           id_xval(y_val = unlist(migration_period[1, c('start', 'end')]),
+                                                   pointa = rev(unlist(pop_poly_list[[2]][1,])),
                                                    pointb = rev(unlist(pop_poly_list[[2]][4,])) )   ))[c(1, 2, 4, 3),],
                    aes(x = x, y = y), color = NA, fill = "#bfbfbf", alpha=0.5)
+    
+    # p3 <- p2 + 
+    #   geom_polygon(data = data.frame(y = rep(unlist(migration_period[1, c('start', 'end')]), 2),
+    #                                  x = c(id_xval(y_val = unlist(migration_period[1, c('start', 'end')]), 
+    #                                                pointa = rev(unlist(pop_poly_list[[pop1_pos]][2,])), 
+    #                                                pointb = rev(unlist(pop_poly_list[[pop1_pos]][3,])) ),
+    #                                        id_xval(y_val = unlist(migration_period[1, c('start', 'end')]), 
+    #                                                pointa = rev(unlist(pop_poly_list[[pop2_pos]][1,])), 
+    #                                                pointb = rev(unlist(pop_poly_list[[pop2_pos]][4,])) )   ))[c(1, 2, 4, 3),],
+    #                aes(x = x, y = y), color = NA, fill = "#bfbfbf", alpha=0.5)
     
   } else {
     p3 <- p2
@@ -1152,19 +1288,21 @@ plot_demographic_mod_popgrow <- function(par,
   } else {
     
     return(
-      p3 +
-        theme_demovis() +
-        ylab('Time (generations)') +
-        theme(axis.title.y = element_text(size = 16)) +
-        scale_x_continuous(expand = c(0.03, 0.03)) +
-        scale_y_continuous(labels = function(x) format(x, scientific = TRUE), expand = c(0, 0)) +
-        geom_segment(data=data$hist_event_info$processed_hist_events,
-                    aes(x = min(do.call(rbind, pop_poly_list)$x), xend = max(do.call(rbind, pop_poly_list)$x),
-                        y=time, yend=time),
-                    lty=2, size = 1.25, lineend = "round") +
-        geom_text(aes(x = max(do.call(rbind, pop_poly_list)$x)*1.02,
-                      y = data$hist_event_info$processed_hist_events$time, label = formatC(data$hist_event_info$processed_hist_events$time, format = "d", big.mark = ",")), size = label_size, hjust = 0) +
-        coord_cartesian(clip = 'off')
+      list(plot = p3 +
+             theme_demovis() +
+             ylab('Time (generations)') +
+             theme(axis.title.y = element_text(size = 16)) +
+             scale_x_continuous(expand = c(0.03, 0.03)) +
+             scale_y_continuous(labels = function(x) format(x, scientific = TRUE), expand = c(0, 0)) +
+             geom_segment(data=data$hist_event_info$processed_hist_events,
+                          aes(x = min(do.call(rbind, pop_poly_list)$x), xend = max(do.call(rbind, pop_poly_list)$x),
+                              y=time, yend=time),
+                          lty=2, size = 1.25, lineend = "round") +
+             geom_text(aes(x = max(do.call(rbind, pop_poly_list)$x)*(1 + label_nudge),
+                           y = data$hist_event_info$processed_hist_events$time, label = formatC(round(data$hist_event_info$processed_hist_events$time), format = "d", big.mark = ",")), size = label_size, hjust = 0) +
+             coord_cartesian(clip = 'off'),
+           right_side = max(do.call(rbind, pop_poly_list)$x))
+      
       #xlim(pop0_x_left, pop1_x_right*1.1)
     )
     

@@ -61,7 +61,8 @@ source(here('project_scripts', 'sfs_compare_vis_funcs.R')) #needed for Part 1 fo
 ### Loading results (and some initial processing) ###
 #par files
 par_file_list <- lapply(setNames(nm = c('mid', 'north')), function(REGION) {
-  par_file_names <- list.files(here('demographic_modelling', 'fastsimcoal', 'results_files', 'par', REGION, 'par_files'))
+  par_file_names1 <- list.files(here('demographic_modelling', 'fastsimcoal', 'results_files', 'par', REGION, 'par_files'))
+  par_file_names <- par_file_names1[grepl(pattern = 'continuous|no|updated', par_file_names1)]
   lapply(setNames(nm = par_file_names), function(FILE, REGION) {
     maxLpar <- readLines(paste0(here('demographic_modelling', 'fastsimcoal', 'results_files', 'par', REGION, 'par_files'), '/',FILE))
     return(parse_fsc_par(par = maxLpar, start = 2))
@@ -70,12 +71,15 @@ par_file_list <- lapply(setNames(nm = c('mid', 'north')), function(REGION) {
 
 #AIC
 aic_list <- lapply(setNames(nm = c('mid', 'north')), function(REGION) {
-  read.table(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'allmodels_popgrow_altspec.AIC'), header = TRUE)
+  #read.table(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'allmodels_popgrow_altspec.AIC'), header = TRUE)
+  read.table(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'allmodels.AIC'), header = TRUE)
 })
+
 
 #likelihood values
 lik_list <- lapply(setNames(nm = c('mid', 'north')), function(REGION) {
-  lhood_vec <- list.files(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'likelihood_dir', 'popgrow_alt_spec', 'likelihood_dir'))
+  lhood_vec1 <- list.files(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'likelihood_dir', 'popgrow_alt_spec', 'likelihood_dir'))
+  lhood_vec <- lhood_vec1[grepl('continuous|no|updated', lhood_vec1)]
   lhood_vec_named <- setNames(lhood_vec, nm = gsub(".lhoods", "", lhood_vec))
   
   lhood_load <-lapply(lhood_vec_named, function(name, REGION) {
@@ -87,9 +91,8 @@ lik_list <- lapply(setNames(nm = c('mid', 'north')), function(REGION) {
     bind_rows()
 })
 
-
 best_mod_info <- lapply(setNames(nm = c('north', 'mid')), function(REGION) {
-  read.table(here('demographic_modelling', 'fastsimcoal', 'results_files', 'parameter_estimates', REGION, 'recent_geneflow_dualpopgrowth_altspec.bestlhoods'), header = TRUE)
+  read.table(here('demographic_modelling', 'fastsimcoal', 'results_files', 'parameter_estimates', REGION, 'recent_geneflow_dualpopgrowth_altspec_updated.bestlhoods'), header = TRUE)
 })
 
 bootstrap_results <- lapply(setNames(nm = c('north', 'mid')), function(REGION) {
@@ -135,7 +138,7 @@ process_params <- function(raw_est) {
 ####################################################
 
 #extract best fitting model for each region (the recent, asymmetric gene flow model)
-best_fit_mods_par <- lapply(par_file_list, function(region) region[['recent_geneflow_dualpopgrowth_altspec_maxL.par']])
+best_fit_mods_par <- lapply(par_file_list, function(region) region[['recent_geneflow_dualpopgrowth_altspec_updated_maxL.par']])
 
 #update the parameter values in the best fitting model par to reflect the median bootstrap values
 #the complex parameters (CHANGM, growth rates) are recalculated based on the median parameter estimates
@@ -159,17 +162,43 @@ best_fit_mods_par_bs_update <- lapply(setNames(nm = names(best_fit_mods_par)), f
   return(PAR[[REGION]])
 }, PAR = best_fit_mods_par, BOOTSTRAP = bootstrap_results)
 
-#visualize the best fitting models based on the median bootstrap estimates
-best_fit_mods_vis <- lapply(best_fit_mods_par_bs_update, function(par) {
-  plot_demographic_mod_popgrow(par = par,
-                               colors = TRUE,
-                               pop_colors = c("#DC7633", "#3498DB"),
-                               scale_pops = TRUE,
-                               pop_color = '#a3a3a3',
-                               generic_plotting = FALSE,
-                               label_size = 5.5,
-                               perspective = c("forward", "backward")[1])
-})
+
+# #visualize the best fitting models based on the median bootstrap estimates
+# best_fit_mods_vis <- lapply(best_fit_mods_par_bs_update, function(par) {
+#   plot_demographic_mod_popgrow(par = par,
+#                                colors = TRUE,
+#                                pop_colors = c("#DC7633", "#3498DB"),
+#                                scale_pops = TRUE,
+#                                pop_color = '#a3a3a3',
+#                                generic_plotting = FALSE,
+#                                label_size = 5.5,
+#                                perspective = c("forward", "backward")[1])
+# })
+
+
+# annotated_demo_plot_list <- lapply(setNames(nm = c('north', 'mid')), function(REGION, plot_list) {
+#   
+#   region_upper_case <- switch(REGION, mid = {'Mid'}, north = {'North'})
+#   
+#   plot_list[[REGION]]$plot +
+#     geom_segment(data = data.frame(x1 = plot_list[[REGION]]$right_side, x2 = plot_list[[REGION]]$right_side, 
+#                                    y1 = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'TDIV', "Lower CI"]), 
+#                                    y2 = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'TDIV', "Upper CI"])),
+#                  aes(x = x1, y = y1, xend = x2, yend = y2),
+#                  lineend = 'round', size = 2.3) +
+#     geom_point(data = data.frame(x = plot_list[[REGION]]$right_side, y = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'TDIV', "Median"])), 
+#                aes(x = x, y = y), size = 5) +
+#     geom_segment(data = data.frame(x1 = plot_list[[REGION]]$right_side, x2 = plot_list[[REGION]]$right_side, 
+#                                    y1 = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'CHANGM', "Lower CI"]), 
+#                                    y2 = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'CHANGM', "Upper CI"])),
+#                  aes(x = x1, y = y1, xend = x2, yend = y2),
+#                  lineend = 'round', size = 2.3) +
+#     geom_point(data = data.frame(x = plot_list[[REGION]]$right_side, y = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'CHANGM', "Median"])), 
+#                aes(x = x, y = y), size = 5) +
+#     ylim(0, 308000)
+#   
+# }, plot_list = best_fit_mods_vis)
+
 
 aic_list_processed <- lapply(setNames(nm = names(aic_list)), function(REGION, aic_list) {
   aic_list[[REGION]] %>%
@@ -189,18 +218,18 @@ aic_list_processed <- lapply(setNames(nm = names(aic_list)), function(REGION, ai
            mod_name = factor(
              case_when(model == "no_geneflow_dualpopgrowth_altspec" ~ "no gf",
                        model == "continuous_geneflow_dualpopgrowth_altspec" ~ "contin. gf (asym.)",
-                       model == "early_geneflow_dualpopgrowth_altspec" ~ "early gf (asym.)",
-                       model == "recent_geneflow_dualpopgrowth_altspec" ~ "recent gf (asym.)",
-                       model == "early_geneflow_symmetric_dualpopgrowth_altspec" ~ "early gf (sym.)",
-                       model == "recent_geneflow_symmetric_dualpopgrowth_altspec" ~ "recent gf (sym.)",
+                       model == "early_geneflow_dualpopgrowth_altspec_updated" ~ "early gf (asym.)",
+                       model == "recent_geneflow_dualpopgrowth_altspec_updated" ~ "recent gf (asym.)",
+                       model == "early_geneflow_symmetric_dualpopgrowth_altspec_updated" ~ "early gf (sym.)",
+                       model == "recent_geneflow_symmetric_dualpopgrowth_altspec_updated" ~ "recent gf (sym.)",
                        model == "continuous_geneflow_symmetric_dualpopgrowth_altspec" ~ "contin. gf (sym.)",
-                       model == "early_geneflow_unidirect0_dualpopgrowth_altspec" ~ "early gf (0 to 1)",
-                       model == "early_geneflow_unidirect1_dualpopgrowth_altspec" ~ "early gf (1 to 0)",
-                       model == "continuous_geneflow_unidirect0_dualpopgrowth_altspec" ~ "contin. gf (0 to 1)",
-                       model == "continuous_geneflow_unidirect1_dualpopgrowth_altspec" ~ "contin. gf (1 to 0)",
-                       model == "recent_geneflow_unidirect0_dualpopgrowth_altspec" ~ "recent gf (0 to 1)",
-                       model == "recent_geneflow_unidirect1_dualpopgrowth_altspec" ~ "recent gf (1 to 0)"),
-             levels = rev(c("contin. gf (sym.)", "contin. gf (asym.)", "contin. gf (0 to 1)", "contin. gf (1 to 0)", "early gf (sym.)", "early gf (asym.)", "early gf (0 to 1)", "early gf (1 to 0)", "recent gf (sym.)", "recent gf (asym.)", "recent gf (0 to 1)", "recent gf (1 to 0)", "no gf"))
+                       model == "early_geneflow_unidirect0_dualpopgrowth_altspec_updated" ~ "early gf (Pk to Pp)",
+                       model == "early_geneflow_unidirect1_dualpopgrowth_altspec_updated" ~ "early gf (Pp to Pk)",
+                       model == "continuous_geneflow_unidirect0_dualpopgrowth_altspec" ~ "contin. gf (Pk to Pp)",
+                       model == "continuous_geneflow_unidirect1_dualpopgrowth_altspec" ~ "contin. gf (Pp to Pk)",
+                       model == "recent_geneflow_unidirect0_dualpopgrowth_altspec_updated" ~ "recent gf (Pk to Pp)",
+                       model == "recent_geneflow_unidirect1_dualpopgrowth_altspec_updated" ~ "recent gf (Pp to Pk)"),
+             levels = rev(c("contin. gf (sym.)", "contin. gf (asym.)", "contin. gf (Pk to Pp)", "contin. gf (Pp to Pk)", "early gf (sym.)", "early gf (asym.)", "early gf (Pk to Pp)", "early gf (Pp to Pk)", "recent gf (sym.)", "recent gf (asym.)", "recent gf (Pk to Pp)", "recent gf (Pp to Pk)", "no gf"))
              
            )) 
 }, aic_list = aic_list)
@@ -220,18 +249,18 @@ lik_list_processed <- lapply(lik_list, function(REGION) {
            mod_name = factor(
              case_when(model == "no_geneflow_dualpopgrowth_altspec" ~ "no gf",
                        model == "continuous_geneflow_dualpopgrowth_altspec" ~ "contin. gf (asym.)",
-                       model == "early_geneflow_dualpopgrowth_altspec" ~ "early gf (asym.)",
-                       model == "recent_geneflow_dualpopgrowth_altspec" ~ "recent gf (asym.)",
-                       model == "early_geneflow_symmetric_dualpopgrowth_altspec" ~ "early gf (sym.)",
-                       model == "recent_geneflow_symmetric_dualpopgrowth_altspec" ~ "recent gf (sym.)",
+                       model == "early_geneflow_dualpopgrowth_altspec_updated" ~ "early gf (asym.)",
+                       model == "recent_geneflow_dualpopgrowth_altspec_updated" ~ "recent gf (asym.)",
+                       model == "early_geneflow_symmetric_dualpopgrowth_altspec_updated" ~ "early gf (sym.)",
+                       model == "recent_geneflow_symmetric_dualpopgrowth_altspec_updated" ~ "recent gf (sym.)",
                        model == "continuous_geneflow_symmetric_dualpopgrowth_altspec" ~ "contin. gf (sym.)",
-                       model == "early_geneflow_unidirect0_dualpopgrowth_altspec" ~ "early gf (0 to 1)",
-                       model == "early_geneflow_unidirect1_dualpopgrowth_altspec" ~ "early gf (1 to 0)",
-                       model == "continuous_geneflow_unidirect0_dualpopgrowth_altspec" ~ "contin. gf (0 to 1)",
-                       model == "continuous_geneflow_unidirect1_dualpopgrowth_altspec" ~ "contin. gf (1 to 0)",
-                       model == "recent_geneflow_unidirect0_dualpopgrowth_altspec" ~ "recent gf (0 to 1)",
-                       model == "recent_geneflow_unidirect1_dualpopgrowth_altspec" ~ "recent gf (1 to 0)"),
-             levels = rev(c("contin. gf (sym.)", "contin. gf (asym.)", "contin. gf (0 to 1)", "contin. gf (1 to 0)", "early gf (sym.)", "early gf (asym.)", "early gf (0 to 1)", "early gf (1 to 0)", "recent gf (sym.)", "recent gf (asym.)", "recent gf (0 to 1)", "recent gf (1 to 0)", "no gf"))
+                       model == "early_geneflow_unidirect0_dualpopgrowth_altspec_updated" ~ "early gf (Pk to Pp)",
+                       model == "early_geneflow_unidirect1_dualpopgrowth_altspec_updated" ~ "early gf (Pp to Pk)",
+                       model == "continuous_geneflow_unidirect0_dualpopgrowth_altspec" ~ "contin. gf (Pk to Pp)",
+                       model == "continuous_geneflow_unidirect1_dualpopgrowth_altspec" ~ "contin. gf (Pp to Pk)",
+                       model == "recent_geneflow_unidirect0_dualpopgrowth_altspec_updated" ~ "recent gf (Pk to Pp)",
+                       model == "recent_geneflow_unidirect1_dualpopgrowth_altspec_updated" ~ "recent gf (Pp to Pk)"),
+             levels = rev(c("contin. gf (sym.)", "contin. gf (asym.)", "contin. gf (Pk to Pp)", "contin. gf (Pp to Pk)", "early gf (sym.)", "early gf (asym.)", "early gf (Pk to Pp)", "early gf (Pp to Pk)", "recent gf (sym.)", "recent gf (asym.)", "recent gf (Pk to Pp)", "recent gf (Pp to Pk)", "no gf"))
     ))
 })
 
@@ -243,18 +272,105 @@ fsc_results_list <- list(par = best_fit_mods_par_bs_update,
 mod_type_cols <- setNames(c('#cb5cbb', '#FFC60A', '#2A9D8F', '#E24D28'), 
                           nm = c('Continuous gene flow', 'Early gene flow', 'Recent gene flow', 'No gene flow'))
 
-fsc_vis_components_list <- lapply(setNames(nm = c('north', 'mid')), function(REGION, results_list, col) {
+processed_param_list <- lapply(setNames(nm = names(best_mod_info)), function(REGION, param_list) {
+  
+  processed_df <- t(apply(param_list[[REGION]], 2, function(x) quantile(x, probs = c(0.025, 0.5, 0.975) ))) %>%
+    as.data.frame() %>%
+    rename("Lower CI" = `2.5%`,
+           Median = `50%`,
+           "Upper CI" = `97.5%`) %>% 
+    rownames_to_column(var = "Parameter") %>%
+    filter(!(Parameter %in% c("MaxEstLhood", "MaxObsLhood"))) %>%
+    mutate(Description = case_when(Parameter == "N_POP1" ~ "kazumbe pop size",
+                                   Parameter == "N_POP2" ~ "polyodon pop size",
+                                   Parameter == "N_ANC_POP1" ~ "initial kazumbe pop size",
+                                   Parameter == "N_ANC_POP2" ~ "initial polyodon pop size",
+                                   Parameter == "MIG01" ~ "mig. rate, kazumbe to polyodon",
+                                   Parameter == "MIG10" ~ "mig. rate, polyodon to kazumbe",
+                                   Parameter == "TPROP" ~ "prop of TDIV to mig. cessation",
+                                   Parameter == "RSANC" ~ "anc. pop size (relative to sink deme)",
+                                   Parameter == "TDIV" ~ "time to divergence",
+                                   Parameter == "CHANGM" ~ "time to mig. cessation",
+                                   Parameter == "GR_POP1" ~ "kazumbe growth rate",
+                                   Parameter == "GR_POP2" ~ "polyodon growth rate"),
+           Region = switch(REGION, north = "North", mid = "Mid") ) %>% 
+    relocate(Region, .before = Parameter)
+  
+  #update the complex parameters based on the lower CIs, medians, and upper CIs of the simple parameters used to calculate them
+  processed_df[processed_df$Parameter == 'GR_POP1', c("Lower CI", "Median", "Upper CI")] <- log(processed_df[processed_df$Parameter == 'N_ANC_POP1', c("Lower CI", "Median", "Upper CI")]/processed_df[processed_df$Parameter == 'N_POP1', c("Lower CI", "Median", "Upper CI")])/processed_df[processed_df$Parameter == 'TDIV', c("Lower CI", "Median", "Upper CI")]
+  processed_df[processed_df$Parameter == 'GR_POP2', c("Lower CI", "Median", "Upper CI")] <- log(processed_df[processed_df$Parameter == 'N_ANC_POP2', c("Lower CI", "Median", "Upper CI")]/processed_df[processed_df$Parameter == 'N_POP2', c("Lower CI", "Median", "Upper CI")])/processed_df[processed_df$Parameter == 'TDIV', c("Lower CI", "Median", "Upper CI")]
+  processed_df[processed_df$Parameter == 'CHANGM', c("Lower CI", "Median", "Upper CI")] <- processed_df[processed_df$Parameter == 'TDIV', c("Lower CI", "Median", "Upper CI")]*processed_df[processed_df$Parameter == 'TPROP', c("Lower CI", "Median", "Upper CI")]
+  
+  return(
+    list(table_df = processed_df %>% 
+           mutate(Median = formatC(Median, format = "e", digits = 2),
+                  "Lower CI" = formatC(`Lower CI`, format = "e", digits = 2),
+                  "Upper CI" = formatC(`Upper CI`, format = "e", digits = 2)),
+         raw_values = processed_df%>% 
+           mutate(Median = formatC(Median, format = "f", digits = 7),
+                  "Lower CI" = formatC(`Lower CI`, format = "f", digits = 7),
+                  "Upper CI" = formatC(`Upper CI`, format = "f", digits = 7)))
+    
+  )
+}, param_list = bootstrap_results)
+
+
+region_param_info <- lapply(processed_param_list, function(x) x$raw_values) %>% 
+  bind_rows()
+
+
+fsc_vis_components_list <- lapply(setNames(nm = c('north', 'mid')), function(REGION, results_list, region_param_info, col) {
   
   processed_results <- list()
   
-  processed_results[['par']] <- plot_demographic_mod_popgrow(par = results_list[['par']][[REGION]],
-                                                             colors = TRUE,
-                                                             pop_colors = c("#DC7633", "#3498DB"),
-                                                             scale_pops = TRUE,
-                                                             pop_color = '#a3a3a3',
-                                                             generic_plotting = FALSE,
-                                                             label_size = 5.5,
-                                                             perspective = c("forward", "backward")[1])
+  demog_plot <- plot_demographic_mod_popgrow(par = results_list[['par']][[REGION]],
+                                             colors = TRUE,
+                                             pop_colors = c("#DC7633", "#3498DB"),
+                                             scale_pops = TRUE,
+                                             pop_color = '#a3a3a3',
+                                             generic_plotting = FALSE,
+                                             label_size = 5.5,
+                                             label_nudge = 0.05,
+                                             perspective = c("forward", "backward")[1])
+  
+  text_shift <- 1.03
+  
+  processed_results[['par']] <- demog_plot$plot
+  
+  region_upper_case <- switch(REGION, mid = {'Mid'}, north = {'North'})
+  alt_region <- switch(REGION, north = {'Mid'}, mid = {'North'})
+  
+  processed_results[['annotated_par']] <- processed_results[['par']] +
+    geom_segment(data = data.frame(x1 = demog_plot$right_side, x2 = demog_plot$right_side, 
+                                   y1 = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'TDIV', "Lower CI"]), 
+                                   y2 = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'TDIV', "Upper CI"])),
+                 aes(x = x1, y = y1, xend = x2, yend = y2),
+                 lineend = 'round', size = 2.3) +
+    geom_point(data = data.frame(x = demog_plot$right_side, y = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'TDIV', "Median"])), 
+               aes(x = x, y = y), size = 5) +
+    geom_segment(data = data.frame(x1 = demog_plot$right_side * text_shift, x2 = demog_plot$right_side * text_shift, 
+                                   y1 = as.numeric(region_param_info[region_param_info$Region == alt_region & region_param_info$Parameter == 'TDIV', "Lower CI"]), 
+                                   y2 = as.numeric(region_param_info[region_param_info$Region == alt_region & region_param_info$Parameter == 'TDIV', "Upper CI"])),
+                 aes(x = x1, y = y1, xend = x2, yend = y2),
+                 lineend = 'round', size = 1.8, color = "#bfbfbf", alpha=1) +
+    geom_point(data = data.frame(x = demog_plot$right_side * text_shift, y = as.numeric(region_param_info[region_param_info$Region == alt_region & region_param_info$Parameter == 'TDIV', "Median"])), 
+               aes(x = x, y = y), size = 3.5, color = "#bfbfbf", alpha=1) +
+    geom_segment(data = data.frame(x1 = demog_plot$right_side, x2 = demog_plot$right_side, 
+                                   y1 = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'CHANGM', "Lower CI"]), 
+                                   y2 = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'CHANGM', "Upper CI"])),
+                 aes(x = x1, y = y1, xend = x2, yend = y2),
+                 lineend = 'round', size = 2.3) +
+    geom_point(data = data.frame(x = demog_plot$right_side, y = as.numeric(region_param_info[region_param_info$Region == region_upper_case & region_param_info$Parameter == 'CHANGM', "Median"])), 
+               aes(x = x, y = y), size = 5) +
+    geom_segment(data = data.frame(x1 = demog_plot$right_side * text_shift, x2 = demog_plot$right_side * text_shift, 
+                                   y1 = as.numeric(region_param_info[region_param_info$Region == alt_region & region_param_info$Parameter == 'CHANGM', "Lower CI"]), 
+                                   y2 = as.numeric(region_param_info[region_param_info$Region == alt_region & region_param_info$Parameter == 'CHANGM', "Upper CI"])),
+                 aes(x = x1, y = y1, xend = x2, yend = y2),
+                 lineend = 'round', size = 1.8, color = "#bfbfbf", alpha=1) +
+    geom_point(data = data.frame(x = demog_plot$right_side * text_shift, y = as.numeric(region_param_info[region_param_info$Region == alt_region & region_param_info$Parameter == 'CHANGM', "Median"])), 
+               aes(x = x, y = y), size = 3.5, color = "#bfbfbf", alpha=1) +
+    ylim(0, 256000)
+  
   
   processed_results[['aic']] <- results_list[['aic']][[REGION]] %>%
     mutate(deltaAIC = deltaAIC*-1) %>% 
@@ -298,7 +414,7 @@ fsc_vis_components_list <- lapply(setNames(nm = c('north', 'mid')), function(REG
   
   return(processed_results)
   
-}, results_list = fsc_results_list, col = mod_type_cols)
+}, results_list = fsc_results_list, region_param_info = region_param_info, col = mod_type_cols)
 
 
 region_title <- lapply(setNames(c("North region", "Mid region"), nm = c('north', 'mid')), function(REGION) {
@@ -314,10 +430,10 @@ region_title <- lapply(setNames(c("North region", "Mid region"), nm = c('north',
 
 multipanel_list <- lapply(setNames(nm = c('north', 'mid')), function (REGION, vis_list, region_title_list) {
   
-  multipanel <- cowplot::plot_grid(vis_list[[REGION]]$par + theme(plot.margin = margin(5, 55, 5, 5)), 
+  multipanel <- cowplot::plot_grid(vis_list[[REGION]]$annotated_par + theme(plot.margin = margin(5, 55, 5, 5)), 
                      ggdraw(egg::ggarrange(vis_list[[REGION]]$aic, vis_list[[REGION]]$likelihood, ncol = 2)) + theme(plot.margin = margin(5, 5, 5, 35)),
                      labels = switch(REGION, north = {c('(a)', '(b)')}, mid = {c('(c)', '(d)')}) , 
-                     rel_widths = c(0.38, 0.62), label_size = 20, hjust = c(0.3, -0.5))
+                     rel_widths = c(0.38, 0.62), label_size = 22, hjust = c(0.3, -0.5))
   
   multipanel_plustitle <- plot_grid(region_title_list[[REGION]], multipanel, 
                                     nrow = 2, rel_heights = c(0.1, 0.9))
@@ -460,7 +576,10 @@ multipanel1 <- cowplot::plot_grid(multipanel_list$north + theme(plot.margin = ma
 
 cowplot::plot_grid(multipanel1, tree_legend, ncol = 2, rel_widths = c(0.92, 0.08)) + theme(plot.margin = margin(0, 0, 0, 12))
 
-ggsave(here('figures', 'fastsimcoal_mod_results_pluslegend_9_30_2021.png'), 
+# ggsave(here('figures', 'fastsimcoal_mod_results_pluslegend_9_30_2021.png'), 
+#        width = 2.25*18, height = 2.25*10.5, units = "cm", bg = "white")
+
+ggsave(here('figures', 'fastsimcoal_mod_results_pluslegend_3_31_2022.png'), 
        width = 2.25*18, height = 2.25*10.5, units = "cm", bg = "white")
 
 
@@ -542,6 +661,21 @@ cat(fsc_best_mods_params, file = here('tables', 'fsc_best_mods_params_table.txt'
 ### TABLE OF MODEL FIT RESULTS ###
 ##################################
 
+#the same order as the models in the main text figure
+mod_order <- c('contin. gf (sym.)',
+               'contin. gf (asym.)',
+               'contin. gf (Pk to Pp)',
+               'contin. gf (Pp to Pk)',
+               'early gf (sym.)',
+               'early gf (asym.)',
+               'early gf (Pk to Pp)',
+               'early gf (Pp to Pk)',
+               'recent gf (sym.)',
+               'recent gf (asym.)',
+               'recent gf (Pk to Pp)',
+               'recent gf (Pp to Pk)',
+               'no gf')
+
 fsc_mod_fit_processed_final <- aic_list_processed_df %>% 
   select(region, mod_class, mod_name, number_params, MaxEstLhood, deltaL, AIC, deltaAIC, relative_likelihood_updated) %>% 
   mutate(MaxEstLhood = round(MaxEstLhood, 2),
@@ -556,7 +690,9 @@ fsc_mod_fit_processed_final <- aic_list_processed_df %>%
          "log10(Lhood)" = MaxEstLhood,
          "$\\Delta$Lhood" = deltaL,
          "$\\Delta$AIC" = deltaAIC,
-         "Rel. Lhood" = relative_likelihood_updated)
+         "Rel. Lhood" = relative_likelihood_updated) %>% 
+  mutate(`Model name` = factor(`Model name`, levels = mod_order)) %>% 
+  dplyr::arrange(desc(Region), `Model name`)
 
 rownames(fsc_mod_fit_processed_final) <- NULL
 
@@ -572,6 +708,10 @@ cat(fsc_mod_fit_table, file = here('tables', 'fsc_mod_fit_table.txt'), append = 
 ################################################
 ### MULTIPANEL PLOT OF ALL TESTED FSC MODELS ###
 ################################################
+
+library(grid)
+
+#source(here('project_scripts', 'fsc_plotting_functions.R'))
 
 par_file_list_processed <- lapply(par_file_list, function(region) {
   region[!grepl(".*change_geneflow.*", names(region))]
@@ -603,88 +743,147 @@ names(par_multi_level_list) <- new_names_vec
 par_full_updated_names <- lapply(par_multi_level_list, function(mod_list) {
   
   names(mod_list)[!grepl(pattern = "unidirect0|symmetric|unidirect1", names(mod_list))] <- "Asymmetric"
-  names(mod_list)[grepl(pattern = "symmetric_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Symmetric"
-  names(mod_list)[grepl(pattern = "unidirect0_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Unidirect (0 to 1)"
-  names(mod_list)[grepl(pattern = "unidirect1_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Unidirect (1 to 0)"
+  names(mod_list)[grepl(pattern = "symmetric_dualpopgrowth_altspec", names(mod_list))] <- "Symmetric"
+  names(mod_list)[grepl(pattern = "unidirect0_dualpopgrowth_altspec", names(mod_list))] <- "Unidirect (Pk to Pp)"
+  names(mod_list)[grepl(pattern = "unidirect1_dualpopgrowth_altspec", names(mod_list))] <- "Unidirect (Pp to Pk)"
   return(mod_list)
 })
 
+mod_type_cols <- setNames(c('#cb5cbb', '#FFC60A', '#2A9D8F', '#E24D28'), 
+                          nm = c('Continuous gene flow', 'Early gene flow', 'Recent gene flow', 'No gene flow'))
+
+mod_type_cols_background <- setNames(c('#efceea', '#fff3ce', '#d4ebe8', '#f6c9be'), 
+                                     nm = c('Continuous gene flow', 'Early gene flow', 'Recent gene flow', 'No gene flow'))
 
 
-full_plot_list_processed <- lapply(setNames(nm = names(par_full_updated_names)), function(MULTIPANEL_NAME, par_list) {
-  multipanel_title <- ggdraw() + 
-    draw_label(
-      MULTIPANEL_NAME,
-      x = 0.5, y = 0.5, hjust = 0.5, vjust = 0.5,
-      fontface = "bold", size = 18
-    )
-  
-  plot_list1 <- lapply(par_list[[MULTIPANEL_NAME]], function(mod) {
-    plot_demographic_mod(par = mod,
-                         colors = TRUE,
-                         pop_colors = c("#DC7633", "#3498DB"),
-                         scale_pops = FALSE,
-                         pop_color = '#a3a3a3',
-                         generic_plotting = TRUE,
-                         generic_arrow_head_size = 0.07)
-  } )
-  
-  
-  processed_plot_list <- lapply(setNames(nm = names(plot_list1)), function(TITLE, plot_list, mod_class) {
-    if (mod_class == "No gene flow") {
-      plot_list[[TITLE]] + 
-        ggtitle(TITLE) +
-        theme(plot.title = element_text(hjust = 0.5, size = 17, color = "white"))
-    } else {
-      plot_list[[TITLE]] + 
-        ggtitle(TITLE) +
-        theme(plot.title = element_text(hjust = 0.5, size = 17))
-    }
+plot_list_migmatcolor <- list()
+
+for (CLASS in names(par_full_updated_names)) {
+  for (MOD in names(par_full_updated_names[[CLASS]])) {
     
-  }, plot_list = plot_list1, mod_class = MULTIPANEL_NAME)
-  
-  if (length(processed_plot_list) == 1) {
-    return(
-      plot_grid(multipanel_title, 
-                plot_grid(processed_plot_list[[1]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
-                          ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
-                          ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
-                          ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")), 
-                          nrow = 4 ) +
-                  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1)),
-                rel_heights = c(0.07, 1),
-                nrow = 2)
-    )
-  } else {
-    return(
-      plot_grid(multipanel_title, 
-                plot_grid(processed_plot_list[["Symmetric"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
-                          processed_plot_list[["Asymmetric"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
-                          processed_plot_list[["Unidirect (0 to 1)"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
-                          processed_plot_list[["Unidirect (1 to 0)"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
-                          nrow = 4) +
-                  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1)),
-                rel_heights = c(0.07, 1),
-                nrow = 2)
-    )
+    plot_list_migmatcolor[[CLASS]][[MOD]] <- plot_demographic_mod(par = par_full_updated_names[[CLASS]][[MOD]],
+                                                      colors = TRUE,
+                                                      pop_colors = c("#DC7633", "#3498DB"),
+                                                      scale_pops = FALSE,
+                                                      pop_color = '#929292', #a3a3a3
+                                                      mig_band_color = mod_type_cols[[CLASS]],
+                                                      generic_plotting = TRUE,
+                                                      generic_arrow_head_size = 0.09)
+    
+    #plot_list_migmatcolor[[CLASS]][[MOD]] <- plot_list_migmatcolor[[CLASS]][[MOD]] + 
+      #theme(panel.background = element_rect(fill = mod_type_cols_background[[CLASS]], color = mod_type_cols_background[[CLASS]]))
+    
+    #if ( (CLASS != "No gene flow") & (MOD %in% c("Symmetric", "Unidirect (Pk to Pp)"))) {
+    # if (CLASS  %in% c("Continuous gene flow", "Recent gene flow")) {
+    #   plot_list[[CLASS]][[MOD]] <- plot_list[[CLASS]][[MOD]] + 
+    #     theme(panel.background = element_rect(fill = mod_type_cols_background[[CLASS]], color = mod_type_cols_background[[CLASS]]))
+    # }
+    
   }
+}
+
+
+
+plot_list_migmatcolor_withpadding <- lapply(plot_list_migmatcolor, function(x) {
+  lapply(x, function(y) y  + theme(plot.margin = unit(c(0.2, 0.7, 0.2, 0.7), "cm")) )
+})
+
+
+prac_multipanel <- plot_grid(plot_list_migmatcolor_withpadding$`Continuous gene flow`$Symmetric, plot_list_migmatcolor_withpadding$`Early gene flow`$Symmetric, plot_list_migmatcolor_withpadding$`Recent gene flow`$Symmetric,
+          plot_list_migmatcolor_withpadding$`Continuous gene flow`$Asymmetric, plot_list_migmatcolor_withpadding$`Early gene flow`$Asymmetric, plot_list_migmatcolor_withpadding$`Recent gene flow`$Asymmetric,
+          plot_list_migmatcolor_withpadding$`Continuous gene flow`$`Unidirect (Pk to Pp)`, plot_list_migmatcolor_withpadding$`Early gene flow`$`Unidirect (Pk to Pp)`, plot_list_migmatcolor_withpadding$`Recent gene flow`$`Unidirect (Pk to Pp)`,
+          plot_list_migmatcolor_withpadding$`Continuous gene flow`$`Unidirect (Pp to Pk)`, plot_list_migmatcolor_withpadding$`Early gene flow`$`Unidirect (Pp to Pk)`, plot_list_migmatcolor_withpadding$`Recent gene flow`$`Unidirect (Pp to Pk)`,
+          nrow = 4, labels = paste0('(', letters[1:12], ')') )
+
+gf_timing_legend <- get_legend(
+  data.frame(x = c(1, 2, 3), 
+             "Gene flow timing" = factor(c('continuous', 'early', 'recent'), levels = c('continuous', 'early', 'recent')),
+             check.names = FALSE) %>% 
+    ggplot() +
+    geom_histogram(aes(x = x, fill = `Gene flow timing`)) +
+    theme_bw() +
+    theme(legend.position = "bottom",
+          legend.margin = margin(-6, 0, 0, 0),
+          legend.title = element_text(size = 16.5),
+          legend.text = element_text(size = 13, margin = margin(l = 1, r = 8, unit = "pt"))) +
+    scale_fill_manual(values = setNames(c('#cb5cbb', '#FFC60A', '#2A9D8F'), 
+                                        nm = c('continuous', 'early', 'recent')))
   
-  return(processed_plot_list)
-}, par_list = par_full_updated_names)
+)
+
+
+arrow_legend <- data.frame(y = c(4, 3.1, 2.9, 2, 1)) %>% 
+  ggplot() +
+  geom_segment(
+    aes(x = 2.5, xend = 3, y = y, yend = y), 
+    arrow = arrow(length = unit(0.25, 'cm'), type = 'closed', ends = c("both", "first", "last", "last", "first") ),
+    size = 0.7
+  ) +
+  geom_text(data = data.frame(y_text = 4:1,
+                       text = c('symmetric', 'asymmetric', 'unidirect (Pk to Pp)', 'unidirect (Pp to Pk)')),
+            aes(x = 3.5, y = y_text, label = text), size = 5) +
+  theme_void() +
+  ggtitle('Gene flow parameterization') +
+  theme(plot.title = element_text(size = 20)) +
+  xlim(0, 6)
 
 
 
-plot_grid(
-  full_plot_list_processed$`Continuous gene flow`,
-  full_plot_list_processed$`Early gene flow`,
-  full_plot_list_processed$`Recent gene flow`,
-  full_plot_list_processed$`No gene flow`,
-  ncol = 4
-) +
-  theme(plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm"))
+y.grob_symmetric <- textGrob("Bidirectional\nsymmetric", 
+                             gp=gpar(fontface="plain", col="black", fontsize=15), rot=90)
 
-ggsave(here('figures', 'fastsimcoal_allmods.png'), 
-       width = 1.4*20, height = 1.4*16.5, units = "cm", bg = "white")
+y.grob_asymmetric <- textGrob("Bidirectional\nasymmetric", 
+                              gp=gpar(fontface="plain", col="black", fontsize=15), rot=90)
+
+y.grob_uni01 <- textGrob("Unidirectional\n(Pk to Pp)", 
+                              gp=gpar(fontface="plain", col="black", fontsize=15), rot=90)
+
+y.grob_uni10 <- textGrob("Unidirectional\n(Pp to Pk)", 
+                         gp=gpar(fontface="plain", col="black", fontsize=15), rot=90)
+
+
+symmetric_plot <- grid.arrange(arrangeGrob(plot_grid(plot_list_migmatcolor_withpadding$`Continuous gene flow`$Symmetric,
+                                                     plot_list_migmatcolor_withpadding$`Early gene flow`$Symmetric,
+                                                     plot_list_migmatcolor_withpadding$`Recent gene flow`$Symmetric, 
+                                                     nrow = 1,
+                                                     labels = c("(a)", "(b)", "(c)"), label_size = 18), 
+                                           left = y.grob_symmetric))
+
+asymmetric_plot <- grid.arrange(arrangeGrob(plot_grid(plot_list_migmatcolor_withpadding$`Continuous gene flow`$Asymmetric,
+                                                     plot_list_migmatcolor_withpadding$`Early gene flow`$Asymmetric,
+                                                     plot_list_migmatcolor_withpadding$`Recent gene flow`$Asymmetric, 
+                                                     nrow = 1,
+                                                     labels = c("(d)", "(e)", "(f)"), label_size = 18), 
+                                           left = y.grob_asymmetric))
+
+unidirect_01 <- grid.arrange(arrangeGrob(plot_grid(plot_list_migmatcolor_withpadding$`Continuous gene flow`$`Unidirect (Pk to Pp)`,
+                                                      plot_list_migmatcolor_withpadding$`Early gene flow`$`Unidirect (Pk to Pp)`,
+                                                      plot_list_migmatcolor_withpadding$`Recent gene flow`$`Unidirect (Pk to Pp)`, 
+                                                      nrow = 1,
+                                                      labels = c("(g)", "(h)", "(i)"), label_size = 18), 
+                                            left = y.grob_uni01))
+
+unidirect_10 <- grid.arrange(arrangeGrob(plot_grid(plot_list_migmatcolor_withpadding$`Continuous gene flow`$`Unidirect (Pp to Pk)`,
+                                                   plot_list_migmatcolor_withpadding$`Early gene flow`$`Unidirect (Pp to Pk)`,
+                                                   plot_list_migmatcolor_withpadding$`Recent gene flow`$`Unidirect (Pp to Pk)`, 
+                                                   nrow = 1,
+                                                   labels = c("(j)", "(k)", "(l)"), label_size = 18), 
+                                         left = y.grob_uni10))
+
+gf_timing_legend_multipanel <- plot_grid(plot_grid(ggplot() + theme_void() + theme(panel.background = element_rect(fill = 'white', color = "white"))),
+                      gf_timing_legend, 
+                      ncol = 2, 
+                      rel_widths = c(0.07, 0.93))
+
+plot_grid(symmetric_plot,
+          asymmetric_plot,
+          unidirect_01,
+          unidirect_10,
+          gf_timing_legend_multipanel, nrow = 5, rel_heights = c(100, 100, 100, 100, 20)) +
+  theme(plot.margin = unit(c(0, 0, 0, 0.23), "cm"))
+
+ggsave(here('figures', 'fastsimcoal_allmods_testcolor.png'), 
+       width = 1.2*20, height = 1.2*16.5, units = "cm", bg = "white")
 
 
 
@@ -698,16 +897,27 @@ rownames(processed_param_df_full) <- NULL
 processed_param_info_final <- processed_param_df_full[!duplicated(processed_param_df_full$Parameter),] %>%
   filter(!(Parameter %in% c('MIG_01', 'MIG_10') )) %>% 
   mutate(Lower = recode(Lower, '0.000001' = '1e-06', '0.0001' = '1e-04'),
-         Upper = recode(Upper, '250000' = '2.5e05'))
+         Upper = recode(Upper, '250000' = '2.5e05'),
+         Description = case_when(Parameter == "N_POP1" ~ "kazumbe pop size",
+                                 Parameter == "N_POP2" ~ "polyodon pop size",
+                                 Parameter == "N_ANC_POP1" ~ "initial kazumbe pop size",
+                                 Parameter == "N_ANC_POP2" ~ "initial polyodon pop size",
+                                 Parameter == "MIG01" ~ "mig. rate, kazumbe to polyodon",
+                                 Parameter == "MIG10" ~ "mig. rate, polyodon to kazumbe",
+                                 Parameter == "MIG" ~ "mig. rate (symmetric mig. models)",
+                                 Parameter == "TPROP" ~ "prop of TDIV to mig. cessation",
+                                 Parameter == "RSANC" ~ "anc. pop size (relative to sink deme)",
+                                 Parameter == "TDIV" ~ "time to divergence",
+                                 Parameter == "CHANGM" ~ "time to mig. cessation",
+                                 Parameter == "GR_POP1" ~ "kazumbe growth rate",
+                                 Parameter == "GR_POP2" ~ "polyodon growth rate"))
 
 processed_param_info_final_table <- processed_param_info_final %>% 
   kbl('latex',  booktabs = TRUE, align = "c") %>%
   kable_styling(latex_options = c("scale_down", "hold_position")) %>% 
-  add_header_above(c(" ", " ", " ", "Search Range" = 2, " "))
+  add_header_above(c(" ", " ", " ", "Search Range" = 2, " ", " "))
 
 cat(processed_param_info_final_table, file = here('tables', 'fsc_param_info.txt'), append = FALSE)
-
-
 
 
 
@@ -743,8 +953,8 @@ source(here('project_scripts', 'sfs_compare_vis_funcs.R'))
 
 ### Loading results (and some initial processing) ###
 load_sfs_list <- lapply(setNames(nm = c('north', 'mid')), function(REGION) {
-  exp_sfs_list_names <- list.files(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'likelihood_dir', 'popgrow_alt_spec', 'recent_geneflow_dualpopgrowth_altspec_sfs'))
-  exp_sfs_list <- lapply(setNames(paste0(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'likelihood_dir', 'popgrow_alt_spec', 'recent_geneflow_dualpopgrowth_altspec_sfs'), '/',exp_sfs_list_names), nm = gsub(".txt", "", exp_sfs_list_names)), function(FILE) {
+  exp_sfs_list_names <- list.files(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'likelihood_dir', 'popgrow_alt_spec', 'recent_geneflow_dualpopgrowth_altspec_updated_sfs'))
+  exp_sfs_list <- lapply(setNames(paste0(here('demographic_modelling', 'fastsimcoal', 'results_files', 'model_fit_results', REGION, 'likelihood_dir', 'popgrow_alt_spec', 'recent_geneflow_dualpopgrowth_altspec_updated_sfs'), '/',exp_sfs_list_names), nm = gsub(".txt", "", exp_sfs_list_names)), function(FILE) {
     as.matrix(read.table(FILE, header = T, row.names = 1))
   })
   
@@ -1491,10 +1701,7 @@ ggsave(here('figures', 'fsc_mid_region_topmod_1dsfs.png'),
 #           ncol = 3
 #             )
 # 
-# 
-# 
-# 
-# 
+#
 # mid_1d_sfs <- plot_1d_sfs(sfs_list =list(observed = mid_obs_sfs, expected = mid_exp_sfs_list_list),
 #                           max_freq = 16,
 #                           plot = TRUE,
@@ -1641,4 +1848,711 @@ ggsave(here('figures', 'fsc_mid_region_topmod_1dsfs.png'),
 # cowplot::plot_grid(north_fsc_results_plustitle + theme(plot.margin = margin(0, 0, 5, 0)), 
 #                    north_fsc_results_plustitle + theme(plot.margin = margin(5, 0, 0, 0)), nrow = 2)
 
+
+
+
+# 
+# 
+# 
+# 
+# 
+# pop.cols <- viridis::viridis(2)
+# 
+# 
+# 
+# best_fit_mods_par_bs_update$mid$hist_event_info$processed_hist_events
+# events <- best_fit_mods_par_bs_update$mid$hist_event_info$processed_hist_events
+# 
+# 
+# ############################
+# # subsetting data into migration vs div events
+# ############################
+# mig_events <- events %>%
+#   filter(migrants < 1) %>%
+#   filter(source != sink)
+# div_events <- events %>%
+#   filter(migrants == 1) %>%
+#   filter(source != sink)
+# 
+# pop_size_list <- list(current = best_fit_mods_par_bs_update$mid$pop_size,
+#                       historical = calc_historical_popsize(current_pop = best_fit_mods_par_bs_update$mid$pop_size, 
+#                                                            growth_rate = best_fit_mods_par_bs_update$mid$growth_rate, 
+#                                                            time = div_events$time[1]))
+# 
+# # if (scale_pops) {
+# #   pops_rel_ne <- rescale(data$pop_size, 0.5, 1.2)
+# #   #root_rel_ne <- rescale(div_events$new_deme_size[div_events$time == max(div_events$time)]*data$pop_size[1], 0.5, 1.2)
+# #   root_rel_ne <- rescale(div_events$new_deme_size[div_events$time == max(div_events$time)]*data$pop_size[div_events$sink + 1], 0.5, 1.2)
+# #   div_events$source_rel_ne <- pops_rel_ne[div_events$source + 1]
+# #   div_events$sink_rel_ne <- pops_rel_ne[div_events$sink + 1]
+# #   
+# #   mig_events$source_rel_ne <- pops_rel_ne[mig_events$source + 1]
+# #   mig_events$sink_rel_ne <- pops_rel_ne[mig_events$sink + 1]
+# # }
+# 
+# if (scale_pops == TRUE) {
+#   root_pop_size <- div_events$new_deme_size[div_events$time == max(div_events$time)]*pop_size_list$historical[div_events$sink + 1]
+#   root_rel_ne <- rescale_alt(root_pop_size, 0.1, 1.2, c(unlist(pop_size_list), root_pop_size))
+#   
+#   pops_rel_ne <- rescale_alt(pop_size_list$current, 0.1, 1.2, pop_size_vec = c(unlist(pop_size_list), root_pop_size) )
+#   hist_pops_rel_ne <- rescale_alt(pop_size_list$historical, 0.1, 1.2, pop_size_vec = c(unlist(pop_size_list), root_pop_size) )
+#   
+#   mig_events$source_rel_ne <- pops_rel_ne[mig_events$source + 1]
+#   mig_events$sink_rel_ne <- pops_rel_ne[mig_events$sink + 1]
+# }
+# 
+# width <- 0.75
+# pop_poly_list <- lapply(1:2, function(X, pops_rel_ne, hist_pops_rel_ne, width, div_events) {
+#   
+#   data.frame(y = rep(c(0, div_events$time[1]), each  = 2),
+#              # x = c(div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 - width*pops_rel_ne[X]/2,
+#              #       div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 + width*pops_rel_ne[X]/2,
+#              #       div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 + width*hist_pops_rel_ne[X]/2,
+#              #       div_events[[switch(X, `1` = 'source', `2` = 'sink')]][1] + 1 - width*hist_pops_rel_ne[X]/2)
+#              x = c((X - 1) + 1 - width*pops_rel_ne[X]/2,
+#                    (X - 1) + 1 + width*pops_rel_ne[X]/2,
+#                    (X - 1) + 1 + width*hist_pops_rel_ne[X]/2,
+#                    (X - 1) + 1 - width*hist_pops_rel_ne[X]/2)
+#   )
+#   
+# }, pops_rel_ne = pops_rel_ne, hist_pops_rel_ne = hist_pops_rel_ne, width = width, div_events = div_events)
+# 
+# 
+# #return(pop_poly_list)
+# #3/30/2022
+# #pop_poly_list <- pop_poly_list[match(div_events[c('source', 'sink')], 0:1)]
+# pop1_pos <- which(div_events[c('source', 'sink')] == 0)
+# pop2_pos <- which(div_events[c('source', 'sink')] == 1)
+# 
+# 
+# ############################
+# # first, set up the skeleton using divergences
+# # it'd be good if we can make this more flexible (i.e. works with any number of div events)
+# ############################
+# tgap <- max(events$time)*0.10
+# troot <- max(events$time)*1.33
+# 
+# p <- ggplot() +
+#   xlim(0,length(best_fit_mods_par_bs_update$mid$pop_size)*1.5)+
+#   ylim(0,troot)
+# 
+# #width <- 0.75
+# p1 <- p + 
+#   geom_rect(mapping=aes(xmin=min(pop_poly_list[[1]][pop_poly_list[[1]]$y != 0,]$x),
+#                        xmax=max(pop_poly_list[[2]][pop_poly_list[[1]]$y != 0,]$x),
+#                        ymin=div_events$time[1],ymax=div_events$time[1]+tgap), fill=pop_color) +
+#   # geom_rect(mapping=aes(xmin=min(pop_poly_list[[pop1_pos]][pop_poly_list[[pop1_pos]]$y != 0,]$x),
+#   #                       xmax=max(pop_poly_list[[pop2_pos]][pop_poly_list[[pop2_pos]]$y != 0,]$x),
+#   #                       ymin=div_events$time[1],ymax=div_events$time[1]+tgap), fill=pop_color) + 
+#   # root
+#   geom_rect(mapping=aes(xmin=(div_events$source[1]+div_events$sink[1]+2)/2 - width*root_rel_ne/2,
+#                         xmax=(div_events$source[1]+div_events$sink[1]+2)/2 + width*root_rel_ne/2,
+#                         ymin=div_events$time[1],
+#                         ymax=troot), fill=pop_color) + 
+#   geom_polygon(data = pop_poly_list[[1]],
+#                aes(x = x, y = y), fill=pop_color)  +
+#   geom_polygon(data = pop_poly_list[[2]],
+#                aes(x = x, y = y), fill=pop_color)
+#   # geom_polygon(data = pop_poly_list[[pop1_pos]],
+#   #              aes(x = x, y = y), fill=pop_color)  + 
+#   # geom_polygon(data = pop_poly_list[[pop2_pos]],
+#   #              aes(x = x, y = y), fill=pop_color) 
+
+
+
+# ################################################
+# ### MULTIPANEL PLOT OF ALL TESTED FSC MODELS ###
+# ################################################
+# 
+# 
+# par_file_list_processed <- lapply(par_file_list, function(region) {
+#   region[!grepl(".*change_geneflow.*", names(region))]
+# })
+# 
+# 
+# ### process names ###
+# #1. remove all underscores
+# names1 <- gsub(pattern = '_', replacement = ' ', names(par_file_list_processed$mid))
+# 
+# first_word <- unique(word(gsub(pattern = '_', replacement = ' ', names(par_file_list_processed$mid)), start = 1, end = 1))
+# 
+# par_multi_level_list <- lapply(setNames(nm = first_word), function(first_w, name_vec, par_list) {
+#   processed_names <- word(gsub(pattern = '_', replacement = ' ', name_vec), start = 1, end = 1)
+#   full_names <- name_vec[processed_names %in% first_w]
+#   
+#   par_list[names(par_list) %in% full_names]
+# }, name_vec = names(par_file_list_processed$mid), par_list = par_file_list_processed$mid)
+# 
+# new_names_vec <- data.frame(orig_name = names(par_multi_level_list)) %>% 
+#   mutate(new_names = case_when(orig_name == "early" ~ "Early gene flow",
+#                                orig_name == "continuous" ~ "Continuous gene flow",
+#                                orig_name == "no" ~ "No gene flow",
+#                                orig_name == "recent" ~ "Recent gene flow")) %>% 
+#   pull(new_names)
+# 
+# names(par_multi_level_list) <- new_names_vec
+# 
+# par_full_updated_names <- lapply(par_multi_level_list, function(mod_list) {
+#   
+#   names(mod_list)[!grepl(pattern = "unidirect0|symmetric|unidirect1", names(mod_list))] <- "Asymmetric"
+#   names(mod_list)[grepl(pattern = "symmetric_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Symmetric"
+#   names(mod_list)[grepl(pattern = "unidirect0_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Unidirect (Pk to Pp)"
+#   names(mod_list)[grepl(pattern = "unidirect1_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Unidirect (Pp to Pk)"
+#   return(mod_list)
+# })
+# 
+# 
+# 
+# full_plot_list_processed <- lapply(setNames(nm = names(par_full_updated_names)), function(MULTIPANEL_NAME, par_list) {
+#   multipanel_title <- ggdraw() + 
+#     draw_label(
+#       MULTIPANEL_NAME,
+#       x = 0.5, y = 0.5, hjust = 0.5, vjust = 0.5,
+#       fontface = "bold", size = 18
+#     )
+#   
+#   plot_list1 <- lapply(par_list[[MULTIPANEL_NAME]], function(mod) {
+#     plot_demographic_mod(par = mod,
+#                          colors = TRUE,
+#                          pop_colors = c("#DC7633", "#3498DB"),
+#                          scale_pops = FALSE,
+#                          pop_color = '#a3a3a3',
+#                          generic_plotting = TRUE,
+#                          generic_arrow_head_size = 0.07)
+#   } )
+#   
+#   
+#   processed_plot_list <- lapply(setNames(nm = names(plot_list1)), function(TITLE, plot_list, mod_class) {
+#     if (mod_class == "No gene flow") {
+#       plot_list[[TITLE]] + 
+#         ggtitle(TITLE) +
+#         theme(plot.title = element_text(hjust = 0.5, size = 17, color = "white"))
+#     } else {
+#       plot_list[[TITLE]] + 
+#         ggtitle(TITLE) +
+#         theme(plot.title = element_text(hjust = 0.5, size = 17))
+#     }
+#     
+#   }, plot_list = plot_list1, mod_class = MULTIPANEL_NAME)
+#   
+#   if (length(processed_plot_list) == 1) {
+#     return(
+#       plot_grid(multipanel_title, 
+#                 plot_grid(processed_plot_list[[1]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")), 
+#                           nrow = 4 ) +
+#                   theme(panel.border = element_rect(colour = "black", fill = NA, size = 1)),
+#                 rel_heights = c(0.07, 1),
+#                 nrow = 2)
+#     )
+#   } else {
+#     return(
+#       plot_grid(multipanel_title, 
+#                 plot_grid(processed_plot_list[["Symmetric"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           processed_plot_list[["Asymmetric"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           processed_plot_list[["Unidirect (Pk to Pp)"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           processed_plot_list[["Unidirect (Pp to Pk)"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           nrow = 4) +
+#                   theme(panel.border = element_rect(colour = "black", fill = NA, size = 1)),
+#                 rel_heights = c(0.07, 1),
+#                 nrow = 2)
+#     )
+#   }
+#   
+#   return(processed_plot_list)
+# }, par_list = par_full_updated_names)
+# 
+# 
+# 
+# plot_grid(
+#   full_plot_list_processed$`Continuous gene flow`,
+#   full_plot_list_processed$`Early gene flow`,
+#   full_plot_list_processed$`Recent gene flow`,
+#   full_plot_list_processed$`No gene flow`,
+#   ncol = 4
+# ) +
+#   theme(plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm"))
+# 
+# ggsave(here('figures', 'fastsimcoal_allmods.png'), 
+#        width = 1.4*20, height = 1.4*16.5, units = "cm", bg = "white")
+# 
+# 
+# 
+# ################################################
+# ### MULTIPANEL PLOT OF ALL TESTED FSC MODELS ###
+# ################################################
+# 
+# par_file_list_processed <- lapply(par_file_list, function(region) {
+#   region[!grepl(".*change_geneflow.*", names(region))]
+# })
+# 
+# 
+# 
+# ### process names ###
+# #1. remove all underscores
+# library(grid)
+# names1 <- gsub(pattern = '_', replacement = ' ', names(par_file_list_processed$mid))
+# 
+# first_word <- unique(word(gsub(pattern = '_', replacement = ' ', names(par_file_list_processed$mid)), start = 1, end = 1))
+# 
+# par_multi_level_list <- lapply(setNames(nm = first_word), function(first_w, name_vec, par_list) {
+#   processed_names <- word(gsub(pattern = '_', replacement = ' ', name_vec), start = 1, end = 1)
+#   full_names <- name_vec[processed_names %in% first_w]
+#   
+#   par_list[names(par_list) %in% full_names]
+# }, name_vec = names(par_file_list_processed$mid), par_list = par_file_list_processed$mid)
+# 
+# new_names_vec <- data.frame(orig_name = names(par_multi_level_list)) %>% 
+#   mutate(new_names = case_when(orig_name == "early" ~ "Early gene flow",
+#                                orig_name == "continuous" ~ "Continuous gene flow",
+#                                orig_name == "no" ~ "No gene flow",
+#                                orig_name == "recent" ~ "Recent gene flow")) %>% 
+#   pull(new_names)
+# 
+# names(par_multi_level_list) <- new_names_vec
+# 
+# par_full_updated_names <- lapply(par_multi_level_list, function(mod_list) {
+#   
+#   names(mod_list)[!grepl(pattern = "unidirect0|symmetric|unidirect1", names(mod_list))] <- "Asymmetric"
+#   names(mod_list)[grepl(pattern = "symmetric_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Symmetric"
+#   names(mod_list)[grepl(pattern = "unidirect0_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Unidirect (Pk to Pp)"
+#   names(mod_list)[grepl(pattern = "unidirect1_dualpopgrowth_altspec_maxL.par", names(mod_list))] <- "Unidirect (Pp to Pk)"
+#   return(mod_list)
+# })
+# 
+# par_full_updated_names$`Continuous gene flow`$Asymmetric$hist_event_info$processed_hist_events
+# 
+# 
+# mod_type_cols <- setNames(c('#cb5cbb', '#FFC60A', '#2A9D8F', '#E24D28'), 
+#                           nm = c('Continuous gene flow', 'Early gene flow', 'Recent gene flow', 'No gene flow'))
+# 
+# mod_type_cols_background <- setNames(c('#efceea', '#fff3ce', '#d4ebe8', '#f6c9be'), 
+#                                      nm = c('Continuous gene flow', 'Early gene flow', 'Recent gene flow', 'No gene flow'))
+# 
+# 
+# plot_list <- list()
+# 
+# for (CLASS in names(par_full_updated_names)) {
+#   for (MOD in names(par_full_updated_names[[CLASS]])) {
+#     
+#     plot_list[[CLASS]][[MOD]] <- plot_demographic_mod(par = par_full_updated_names[[CLASS]][[MOD]],
+#                                                       colors = TRUE,
+#                                                       pop_colors = c("#DC7633", "#3498DB"),
+#                                                       scale_pops = FALSE,
+#                                                       pop_color = '#929292', #a3a3a3
+#                                                       mig_band_color = "#bfbfbf",
+#                                                       generic_plotting = TRUE,
+#                                                       generic_arrow_head_size = 0.09)
+#     
+#     plot_list[[CLASS]][[MOD]] <- plot_list[[CLASS]][[MOD]] + 
+#       theme(panel.background = element_rect(fill = mod_type_cols_background[[CLASS]], color = mod_type_cols_background[[CLASS]]))
+#     
+#     #if ( (CLASS != "No gene flow") & (MOD %in% c("Symmetric", "Unidirect (Pk to Pp)"))) {
+#     # if (CLASS  %in% c("Continuous gene flow", "Recent gene flow")) {
+#     #   plot_list[[CLASS]][[MOD]] <- plot_list[[CLASS]][[MOD]] + 
+#     #     theme(panel.background = element_rect(fill = mod_type_cols_background[[CLASS]], color = mod_type_cols_background[[CLASS]]))
+#     # }
+#     
+#   }
+# }
+# 
+# 
+# title_list <- lapply(setNames(nm = c("Symmetric", "Asymmetric", "Unidirect (Pk to Pp)", "Unidirect (Pp to Pk)")), function(title) {
+#   textGrob(title, 
+#            gp=gpar(fontface="plain", col="black", fontsize = 14), rot = 90)
+# })
+# 
+# plot_multipanel_list <- lapply(setNames(nm = c("Symmetric", "Asymmetric", "Unidirect (Pk to Pp)", "Unidirect (Pp to Pk)")), function(x, title, plot_list) {
+#   
+#   multipanel1 <- grid.arrange(arrangeGrob(plot_grid(plot_list$`Continuous gene flow`[[x]],
+#                                                     plot_list$`Early gene flow`[[x]],
+#                                                     plot_list$`Recent gene flow`[[x]], 
+#                                                     nrow = 1) +
+#                                             theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)),
+#                                           #theme(panel.border = element_rect(colour = "black", fill=NA, size = 1),
+#                                           #       plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm")), 
+#                                           left = title[[x]], padding = unit(1, "line")))
+#   
+#   return(multipanel1)
+#   
+#   # if (x == 'Asymmetric') {
+#   #   multipanel2 <- ggdraw(grid.arrange(multipanel1, 
+#   #                                      plot_list$`No gene flow`$Asymmetric, 
+#   #                                      ncol = 2, widths = c(0.75, 0.25)))
+#   # } else {
+#   #   multipanel2 <- ggdraw(grid.arrange(multipanel1, 
+#   #                                      ggplot() + theme_void(), 
+#   #                                      ncol = 2, widths = c(0.75, 0.25)))
+#   # }
+#   # return(multipanel2)
+# }, title = title_list, plot_list = plot_list)
+# 
+# multipanel_fsc_mods_wout_titles <- plot_grid(plot_multipanel_list$Symmetric,
+#                                              plot_multipanel_list$Asymmetric,
+#                                              plot_multipanel_list$`Unidirect (Pk to Pp)`,
+#                                              plot_multipanel_list$`Unidirect (Pp to Pk)`, nrow = 4) +
+#   theme(plot.margin = unit(c(0.2, 0.2, 0.2, 0.2), "cm"))
+# 
+# multipanel_fsc_mods_wout_titles
+# 
+# 
+# ggsave(here('figures', 'fastsimcoal_allmods_maintext_wout_titles.png'),
+#        plot = multipanel_fsc_mods_wout_titles,
+#        width = 1.3*22, height = 1.3*13.5, units = "cm", bg = "white")
+# 
+# 
+# continuous_gf_title <- ggdraw() + 
+#   draw_label(
+#     "Continuous gene flow",
+#     hjust = 0.38,
+#     size = 21
+#   )
+# 
+# early_gf_title <- ggdraw() + 
+#   draw_label(
+#     "Early gene flow",
+#     hjust = 0.415,
+#     size = 21
+#   )
+# 
+# recent_gf_title <- ggdraw() + 
+#   draw_label(
+#     "Recent gene flow",
+#     hjust = 0.5,
+#     size = 21
+#   )
+# 
+# 
+# 
+# multipanel_fsc_mods_w_titles <- plot_grid(plot_grid(continuous_gf_title, early_gf_title, recent_gf_title, ncol = 3),
+#                                           multipanel_fsc_mods_wout_titles, rel_heights = c(0.05, 0.95), nrow = 2)
+# 
+# 
+# multipanel_fsc_results <- cowplot::plot_grid(multipanel1, tree_legend, 
+#                                              ncol = 2, 
+#                                              rel_widths = c(0.92, 0.08)) + theme(plot.margin = margin(0, 0, 0, 12))
+# 
+# cowplot::plot_grid(multipanel_fsc_results,
+#                    multipanel_fsc_mods_w_titles,
+#                    nrow = 2, rel_heights = c(0.5, 0.5))
+# 
+# ggsave(here('figures', 'fastsimcoal_allmods_maintext_w_titles.png'),
+#        plot = multipanel_fsc_mods_w_titles,
+#        width = 1.3*22, height = 1.3*13.5, units = "cm", bg = "white")
+# 
+# 
+# grid.arrange(plot_grid(ggplot() +
+#                          theme_void() +
+#                          theme(panel.background = element_rect(fill = 'blue')),
+#                        early_gf_title, 
+#                        early_gf_title, 
+#                        early_gf_title, 
+#                        early_gf_title, ncol = 5, rel_widths = c(0.05, 0.5, 0.5, 0.5, 0.5)), 
+#              prac_multipanel, heights = c(0.15, 0.85)) 
+#
+###############################################
+#
+# #add to plot
+# 
+# prac_arrange <- grid.arrange(arrangeGrob(plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#                                                    plot_list$`Early gene flow`$Symmetric,
+#                                                    plot_list$`Recent gene flow`$Symmetric, nrow = 1) +
+#                                            theme(panel.border = element_rect(colour = "black", fill=NA, size = 1),
+#                                                  plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm")), 
+#                                          left = y.grob))
+# 
+# 
+# plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#           plot_list$`Early gene flow`$Symmetric,
+#           plot_list$`Recent gene flow`$Symmetric, nrow = 1) +
+#   theme(panel.border = element_rect(colour = "black", fill=NA, size = 1))
+# 
+# no_gene_flow_plot <- grid.arrange(title_blank, 
+#                                   plot_grid(plot_list$`No gene flow`$Asymmetric, nrow = 1), 
+#                                   heights=c(0.15, 0.85))
+# 
+# 
+# plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#           plot_list$`Early gene flow`$Symmetric,
+#           plot_list$`Recent gene flow`$Symmetric, nrow = 1) +
+#   theme(panel.border = element_rect(colour = "black", fill=NA, size = 1),
+#         plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm"))
+# 
+# 
+# 
+# y.grob_symmetric <- textGrob("Bidirectional\nsymmetric", 
+#                              gp=gpar(fontface="plain", col="black", fontsize=15), rot=90)
+# 
+# y.grob_asymmetric <- textGrob("Asymmetric gene flow", 
+#                               gp=gpar(fontface="plain", col="black", fontsize=15), rot=90)
+# 
+# 
+# #add to plot
+# 
+# prac_arrange <- grid.arrange(arrangeGrob(plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#                                                    plot_list$`Early gene flow`$Symmetric,
+#                                                    plot_list$`Recent gene flow`$Symmetric, nrow = 1) +
+#                                            theme(panel.border = element_rect(colour = "black", fill=NA, size = 1),
+#                                                  plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm")), 
+#                                          left = y.grob))
+# 
+# nogf_arrange <- grid.arrange(arrangeGrob(plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#                                                    plot_list$`Early gene flow`$Symmetric,
+#                                                    plot_list$`Recent gene flow`$Symmetric, 
+#                                                    nrow = 1) +
+#                                            theme(panel.border = element_rect(colour = "black", fill=NA, size = 1),
+#                                                  plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm")), 
+#                                          left = y.grob))
+# 
+# 
+# prac_multipanel <- ggdraw(grid.arrange(prac_arrange, 
+#                                        plot_list$`No gene flow`$Asymmetric + theme(plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm")), 
+#                                        ncol = 2, widths = c(0.75, 0.25)))
+# 
+# 
+# prac_multipanel +
+#   theme(axis.ticks = element_line(color = 'black'))
+# 
+# 
+# grid.arrange(plot_grid(ggplot() +
+#                          theme_void() +
+#                          theme(panel.background = element_rect(fill = 'blue')),
+#                        early_gf_title, 
+#                        early_gf_title, 
+#                        early_gf_title, 
+#                        early_gf_title, ncol = 5, rel_widths = c(0.05, 0.5, 0.5, 0.5, 0.5)), 
+#              prac_multipanel, heights = c(0.15, 0.85)) 
+# 
+# ggplot() +
+#   theme_void() +
+#   theme(panel.background = element_rect(fill = 'blue'))
+# 
+# early_gf_title <- ggdraw() + 
+#   draw_label(
+#     "Early gene flow",
+#     hjust = 0.5
+#   )
+# 
+# 
+# grid.arrange(prac_arrange, 
+#              ggplot() + theme_void(), 
+#              ncol = 2, widths = c(0.75, 0.25))
+# 
+# plot_list$`Continuous gene flow`
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# library(grid)
+# 
+# title_list <- lapply(setNames(nm = c("Symmetric gene flow", "Asymmetric gene flow", "Unidirect (Pk to Pp)", "Unidirect (Pp to Pk)")), function(title) {
+#   grobTree(rectGrob(gp=gpar(fill="black")),
+#            textGrob(title, x=0.5, hjust=0.5,
+#                     gp=gpar(col="white", cex=1.3)))
+# })
+# 
+# title_blank <- grobTree(rectGrob(gp=gpar(fill = "white", col = "white")),
+#                         textGrob('', x=0.5, hjust=0.5,
+#                                  gp=gpar(col = "white", cex=1.3)))
+# 
+# 
+# symmetric_multipanel <- grid.arrange(title_list$`Symmetric gene flow`, 
+#                                      plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#                                                plot_list$`Early gene flow`$Symmetric,
+#                                                plot_list$`Recent gene flow`$Symmetric, nrow = 1) +
+#                                        theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)), 
+#                                      heights=c(0.15, 0.85))
+# 
+# asymmetric_multipanel <- grid.arrange(title_list$`Asymmetric gene flow`, 
+#                                       plot_grid(plot_list$`Continuous gene flow`$Asymmetric,
+#                                                 plot_list$`Early gene flow`$Asymmetric,
+#                                                 plot_list$`Recent gene flow`$Asymmetric, nrow = 1) +
+#                                         theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)), 
+#                                       heights=c(0.15, 0.85))
+# 
+# unidirect01_multipanel <- grid.arrange(title_list$`Unidirect (Pk to Pp)`, 
+#                                        plot_grid(plot_list$`Continuous gene flow`$`Unidirect (Pk to Pp)`,
+#                                                  plot_list$`Early gene flow`$`Unidirect (Pk to Pp)`,
+#                                                  plot_list$`Recent gene flow`$`Unidirect (Pk to Pp)`, nrow = 1) +
+#                                          theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)), 
+#                                        heights=c(0.15, 0.85))
+# 
+# unidirect10_multipanel <- grid.arrange(title_list$`Unidirect (Pp to Pk)`, 
+#                                        plot_grid(plot_list$`Continuous gene flow`$`Unidirect (Pp to Pk)`,
+#                                                  plot_list$`Early gene flow`$`Unidirect (Pp to Pk)`,
+#                                                  plot_list$`Recent gene flow`$`Unidirect (Pp to Pk)`, nrow = 1) +
+#                                          theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)), 
+#                                        heights=c(0.15, 0.85))
+# 
+# 
+# no_gene_flow_plot <- grid.arrange(title_blank, 
+#                                   plot_grid(plot_list$`No gene flow`$Asymmetric, nrow = 1), 
+#                                   heights=c(0.15, 0.85))
+# 
+# 
+# grid.arrange()
+# no_gene_flow_plot
+# 
+# gf_multipanel <- grid.arrange(symmetric_multipanel,
+#                               asymmetric_multipanel,
+#                               unidirect01_multipanel,
+#                               unidirect10_multipanel, nrow = 4)
+# 
+# nogf_multipanel <- grid.arrange(no_gene_flow_plot,
+#                                 ggplot() + theme_void(),
+#                                 ggplot() + theme_void(),
+#                                 ggplot() + theme_void(), nrow = 4)
+# 
+# grid.arrange(gf_multipanel, nogf_multipanel, ncol = 2, widths = c(0.75, 0.25))
+# 
+# ggplot() + theme_void()
+# 
+# title_list
+# 
+# plot_grid(
+#   plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#             plot_list$`Early gene flow`$Symmetric,
+#             plot_list$`Recent gene flow`$Symmetric, nrow = 1) +
+#     theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)),
+#   plot_grid(plot_list$`Continuous gene flow`$Asymmetric,
+#             plot_list$`Early gene flow`$Asymmetric,
+#             plot_list$`Recent gene flow`$Asymmetric, nrow = 1) +
+#     theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)),
+#   plot_grid(plot_list$`Continuous gene flow`$`Unidirect (Pk to Pp)`,
+#             plot_list$`Early gene flow`$`Unidirect (Pk to Pp)`,
+#             plot_list$`Recent gene flow`$`Unidirect (Pk to Pp)`, nrow = 1) +
+#     theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)),
+#   plot_grid(plot_list$`Continuous gene flow`$`Unidirect (Pp to Pk)`,
+#             plot_list$`Early gene flow`$`Unidirect (Pp to Pk)`,
+#             plot_list$`Recent gene flow`$`Unidirect (Pp to Pk)`, nrow = 1) +
+#     theme(panel.border = element_rect(colour = "black", fill=NA, size = 1)),
+#   nrow = 4
+# ) +
+#   theme(plot.margin = unit(c(0.3, 0.3, 0.3, 0.3), "cm"))
+# 
+# 
+# 
+# 
+# plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#           plot_list$`Early gene flow`$Symmetric,
+#           plot_list$`Recent gene flow`$Symmetric, nrow = 1)
+# 
+# plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#           plot_list$`Early gene flow`$Symmetric,
+#           plot_list$`Recent gene flow`$Symmetric, nrow = 1)
+# 
+# plot_grid(plot_list$`Continuous gene flow`$Symmetric,
+#           plot_list$`Continuous gene flow`$Asymmetric,
+#           plot_list$`Continuous gene flow`$`Unidirect (Pk to Pp)`,
+#           plot_list$`Continuous gene flow`$`Unidirect (Pp to Pk)`, nrow = 4)
+# 
+# 
+# 
+# 
+# plot_list <- lapply(par_full_updated_names, function(CLASS) {
+#   
+#   lapply(CLASS, function(MOD) {
+#     return(
+#       plot_demographic_mod(par = MOD,
+#                            colors = TRUE,
+#                            pop_colors = c("#DC7633", "#3498DB"),
+#                            scale_pops = FALSE,
+#                            pop_color = '#a3a3a3',
+#                            mig_band_color = '#10FFCB',
+#                            generic_plotting = TRUE,
+#                            generic_arrow_head_size = 0.1) +
+#         theme(panel.background = element_rect(fill = '#E0E0E0', color = '#E0E0E0'))
+#     )
+#   })
+#   
+# })
+# 
+# plot_list$`Continuous gene flow`$Symmetric
+# plot_list$`Recent gene flow`$Asymmetric
+# 
+# 
+# 
+# full_plot_list_processed <- lapply(setNames(nm = names(par_full_updated_names)), function(MULTIPANEL_NAME, par_list) {
+#   multipanel_title <- ggdraw() + 
+#     draw_label(
+#       MULTIPANEL_NAME,
+#       x = 0.5, y = 0.5, hjust = 0.5, vjust = 0.5,
+#       fontface = "bold", size = 18
+#     )
+#   
+#   plot_list1 <- lapply(par_list[[MULTIPANEL_NAME]], function(mod) {
+#     plot_demographic_mod(par = mod,
+#                          colors = TRUE,
+#                          pop_colors = c("#DC7633", "#3498DB"),
+#                          scale_pops = FALSE,
+#                          pop_color = '#a3a3a3',
+#                          generic_plotting = TRUE,
+#                          generic_arrow_head_size = 0.07)
+#   } )
+#   
+#   
+#   processed_plot_list <- lapply(setNames(nm = names(plot_list1)), function(TITLE, plot_list, mod_class) {
+#     
+#     plot_list[[TITLE]]
+#     
+#     # if (mod_class == "No gene flow") {
+#     #   plot_list[[TITLE]] + 
+#     #     ggtitle(TITLE) +
+#     #     theme(plot.title = element_text(hjust = 0.5, size = 17, color = "white"))
+#     # } else {
+#     #   plot_list[[TITLE]] + 
+#     #     ggtitle(TITLE) +
+#     #     theme(plot.title = element_text(hjust = 0.5, size = 17))
+#     # }
+#     
+#   }, plot_list = plot_list1, mod_class = MULTIPANEL_NAME)
+#   
+#   if (length(processed_plot_list) == 1) {
+#     return(
+#       plot_grid(multipanel_title, 
+#                 plot_grid(processed_plot_list[[1]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           ggplot() + theme_void() + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")), 
+#                           nrow = 4 ) +
+#                   theme(panel.border = element_rect(colour = "black", fill = NA, size = 1)),
+#                 rel_heights = c(0.07, 1),
+#                 nrow = 2)
+#     )
+#   } else {
+#     return(
+#       plot_grid(multipanel_title, 
+#                 plot_grid(processed_plot_list[["Symmetric"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           processed_plot_list[["Asymmetric"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           processed_plot_list[["Unidirect (Pk to Pp)"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           processed_plot_list[["Unidirect (Pp to Pk)"]] + theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm")),
+#                           nrow = 4) +
+#                   theme(panel.border = element_rect(colour = "black", fill = NA, size = 1)),
+#                 rel_heights = c(0.07, 1),
+#                 nrow = 2)
+#     )
+#   }
+#   
+#   return(processed_plot_list)
+# }, par_list = par_full_updated_names)
+# 
+# full_plot_list_processed$`Continuous gene flow`
+# 
+# 
+# plot_grid(
+#   full_plot_list_processed$`Continuous gene flow`,
+#   full_plot_list_processed$`Early gene flow`,
+#   full_plot_list_processed$`Recent gene flow`,
+#   full_plot_list_processed$`No gene flow`,
+#   ncol = 4
+# ) +
+#   theme(plot.margin = unit(c(0.05, 0.2, 0.2, 0.2), "cm"))
+# 
+# ggsave(here('figures', 'fastsimcoal_allmods.png'), 
+#        width = 1.4*20, height = 1.4*16.5, units = "cm", bg = "white")
 
