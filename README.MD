@@ -1,4 +1,4 @@
-# Variable hybridization between two Lake Tanganyika cichlid species in recent secondary contact
+# Variable hybridization between two Lake Tanganyikan cichlid species in recent secondary contact
 
 ## Table of Contents
 - [Overview](#overview)
