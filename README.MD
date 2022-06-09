@@ -25,8 +25,11 @@ petrochromis_project
 |-- hpc_files
 |   |-- analysis_input_files
 |   |   |-- dstat
-|   |   |--fastsimcoal_inputs_manuscript
-|   |   `-- stairway_inputs
+|   |   |-- fastsimcoal_inputs_manuscript
+|   |   |-- stairway_inputs
+|   |   `-- pixy_inputs
+|   |       |-- full_species_kazumbe_subset_popfile_dir
+|   |       `-- pop_subset_kazumbe_subset_popfile_dir
 |   `-- scripts
 |       |-- dataset_processing
 |       |-- dstat
