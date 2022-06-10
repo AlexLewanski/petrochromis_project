@@ -282,6 +282,7 @@ significant_dstats <- sapply(setNames(nm = c('kazumbe', 'polyodon')), function(S
 
 
 
+
 ################################################
 ### 3. PROCESS THE RANDOMIZED D STAT RESULTS ###
 ################################################
@@ -348,9 +349,6 @@ obs_rand_list_complete <- lapply(setNames(nm = c('polyodon', 'kazumbe')), functi
 }, quant_list = observed_quantile_list, obs_rand = obs_rand_list)
 
 
-obs_rand_list_complete$kazumbe
-
-
 outgroup_taxa <- c('diagramma', 'green') #the outgroup taxa used in the d-stats
 focal_taxa <- c('kazumbe', 'polyodon') #the two species included in the d-stats
 
@@ -391,9 +389,65 @@ for (out in outgroup_taxa) {
 
 
 
-############################
-### 3. VISUALIZE D-STATS ###
-############################
+############################################
+### 3. RESULTS TO REPORT IN RESULTS TEXT ###
+############################################
+
+total_comparisons <- nrow(dstat_df_list_random$diagramma$polyodon)
+
+kazumbe_90_95_count <- nrow(dstat_df_list_random$diagramma$kazumbe[dstat_df_list_random$diagramma$kazumbe$sig_level %in% c('90', '95'),])
+polyodon_90_95_count <- nrow(dstat_df_list_random$diagramma$polyodon[dstat_df_list_random$diagramma$polyodon$sig_level %in% c('90', '95'),])
+
+kazumbe_95_count <- nrow(dstat_df_list_random$diagramma$kazumbe[dstat_df_list_random$diagramma$kazumbe$sig_level == '95',])
+polyodon_95_count <- nrow(dstat_df_list_random$diagramma$polyodon[dstat_df_list_random$diagramma$polyodon$sig_level == '95',])
+
+
+kazumbe_outlier_percentage <- paste0('Percentage kazumbe values outside of inner 90 quantile: ', round(100*(kazumbe_90_95_count/total_comparisons), 1))
+kazumbe_outlier_percentage_95 <- paste0('Percentage of outliers that are outside inner 95 for kazumbe: ', round(100*(kazumbe_95_count/kazumbe_90_95_count), 1))
+
+polyodon_outlier_percentage <- paste0('Percentage polyodon values outside of inner 90 quantile: ', round(100*(polyodon_90_95_count/total_comparisons), 1))
+polyodon_outlier_percentage <- paste0('Percentage of outliers that are outside inner 95 for polyodon: ', round(100*(polyodon_95_count/polyodon_90_95_count), 1))
+
+kazumbe_outlier_percentage
+kazumbe_outlier_percentage_95
+polyodon_outlier_percentage
+polyodon_outlier_percentage
+
+#paste0('Total outlier values that are outside of the inner 95 quantile: ', 
+#        round(100*((kazumbe_95_count + polyodon_95_count)/(kazumbe_90_95_count + polyodon_90_95_count)), 1))
+
+
+### double check by hand:
+#total comparisons for each topology: 56
+
+#kazumbe outliers: 22
+#kazumbe outside 95: 20
+#% outliers (kazumbe): 22/56 = 0.39
+#% outliers that are outside inner 95 (kazumbe): 20/22 = 0.91
+
+#polyodon outliers: 22
+#polyodon outside 95: 18
+#% outliers (polyodon): 22/56 = 0.39
+#% outliers that are outside inner 95 (polyodon): 18/22 = 0.82
+
+#any outliers ID'd with the sample randomization that aren't significant based on block jackknife?
+if (nrow(dstat_df_list_random$diagramma$kazumbe %>% filter(sig_level %in% c('90', '95') & abs(z_score) < 3)) == 0) {
+  message('For kazumbe, all sample randomization outliers are also block jackknife outliers')
+} else {
+  message("For kazumbe, there is at least one sample randomization outliers that isn't a block jackknife outlier") 
+}
+
+if (nrow(dstat_df_list_random$diagramma$polyodon %>% filter(sig_level %in% c('90', '95') & abs(z_score) < 3)) == 0) {
+  message('For polyodon, all sample randomization outliers are also block jackknife outliers')
+} else {
+  message("For polyodon, there is at least one sample randomization outliers that isn't a block jackknife outlier") 
+}
+
+
+
+######################################
+### 3. VISUALIZE D-STATS (Z-SCORE) ###
+######################################
 
 # expression(paste(italic("P"), ". sp. 'kazumbe' (Pk)", sep = ""))
 # expression(paste(italic("P"), ". cf. ",  italic("polyodon"), " (Pp)", sep = ""))
@@ -520,12 +574,10 @@ empty_plot <- ggplot() + theme_void()
 
 
 
-
 #kazumbe_corrplot_title <- expression(paste(italic("P. kazumbe"), " (Pk)"))
 #polyodon_corrplot_title <- expression(paste(italic("P. polyodon"), " (Pp)"))
 kazumbe_corrplot_title <- expression(paste(italic("P"), ". sp. 'kazumbe' (Pk)", sep = ""))
 polyodon_corrplot_title <- expression(paste(italic("P"), ". cf. ",  italic("polyodon"), " (Pp)", sep = ""))
-
 
 
 title_list <- list(kazumbe = kazumbe_corrplot_title,
@@ -646,7 +698,7 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel
 
 ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE.png'), 
         width = 19*1.1, height = 8*1.1, bg = 'white')
-
+  
 
 #type a with P. green outgroup
 plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel_heights = c(0.08, 0.8, 0.08)), 
@@ -679,6 +731,7 @@ processed_table_info <- lapply(dstat_df_list, function(TYPE) {
 })
 
 processed_table_info$type_b$diagramma$kazumbe <- dstat_df_list_random$diagramma$kazumbe %>% 
+  mutate(ecdf_val = ecdf_val*100) %>% 
   rename("P1 location" = p1_location_factor_letter,
          "P2/P3 location" = p2_p3_location_factor_letter,
          "Randomized percentile" = ecdf_val) %>% 
@@ -688,6 +741,7 @@ processed_table_info$type_b$diagramma$kazumbe <- dstat_df_list_random$diagramma$
   arrange(`P1 location`, `P2/P3 location`)
 
 processed_table_info$type_b$diagramma$polyodon <- dstat_df_list_random$diagramma$polyodon %>% 
+  mutate(ecdf_val = ecdf_val*100) %>% 
   rename("P1 location" = p1_location_factor_letter,
          "P2/P3 location" = p2_p3_location_factor_letter,
          "Randomized percentile" = ecdf_val) %>% 
@@ -944,11 +998,11 @@ cat(mantel_test_table_final, file = here('tables', 'dstat_mantel_test_table.txt'
 
 
 
-################
-#####
+###################################################
+### 3. VISUALIZE D-STATS (SAMPLE RANDOMIZATION) ###
+###################################################
 
 #"#9358A7", '#c2a5cf', "#a6a6a6", "#a6dba0", "#309D5D"
-
 
 kazumbe_corrplot_title <- expression(paste(italic("Petrochromis"), " sp. 'kazumbe' (Pk)", sep = ""))
 polyodon_corrplot_title <- expression(paste(italic("Petrochromis"), " cf. ",  italic("polyodon"), " (Pp)", sep = ""))
@@ -957,8 +1011,6 @@ scaleFUN <- function(x) sprintf("%.0f", x)
 title_list <- list(kazumbe = kazumbe_corrplot_title,
                    polyodon = polyodon_corrplot_title)
 
-
-dstat_df_list_random$diagramma$kazumbe
 
 #full_plot_list_rand <- list()
 #for (type in names(dstat_df_list)) {
@@ -1031,12 +1083,10 @@ dstat_df_list_random$diagramma$kazumbe
 #  full_plot_list_rand[[type]] <- outgroup_plot_list
 #}
 
-
   
-  
-  ########################
-  ### CREATING LEGENDS ###
-  ########################
+########################
+### CREATING LEGENDS ###
+########################
   
 segment_df <- data.frame(x1 = c(qnorm(0.025), qnorm(0.05), qnorm(0.5), qnorm(0.95), qnorm(0.975)),
                          y1 = rep(0, 5),
@@ -1309,17 +1359,17 @@ ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRA
 # [5] "polyodon_Katongwe_S"  "polyodon_Nondwa"     
 # [7] "polyodon_Ska"         "polyodon_Gombe_South"
   
-rand_list$polyodon %>% 
-  filter(P1 == "polyodon_Jakob",
-         P2 == "polyodon_Ska",
-         outgroup == 'diagramma') %>% 
-  ggplot() +
-  geom_histogram(aes(x = D)) +
-  geom_vline(data = full_data_list$type_b$polyodon %>% 
-               filter(P1 == "polyodon_Jakob",
-                      P2 == "polyodon_Ska",
-                      outgroup == 'diagramma'),
-             aes(xintercept = D), color = 'red')
+# rand_list$polyodon %>% 
+#   filter(P1 == "polyodon_Jakob",
+#          P2 == "polyodon_Ska",
+#          outgroup == 'diagramma') %>% 
+#   ggplot() +
+#   geom_histogram(aes(x = D)) +
+#   geom_vline(data = full_data_list$type_b$polyodon %>% 
+#                filter(P1 == "polyodon_Jakob",
+#                       P2 == "polyodon_Ska",
+#                       outgroup == 'diagramma'),
+#              aes(xintercept = D), color = 'red')
 
 
 
