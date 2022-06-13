@@ -275,7 +275,7 @@ significant_dstats <- sapply(setNames(nm = c('kazumbe', 'polyodon')), function(S
     processed1 %>% 
       filter(abs(z_score) > 3) %>% 
       nrow()/nrow(processed1),
-    2
+    3
   )
   
 }, results = full_data_list$type_b)
