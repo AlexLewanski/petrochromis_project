@@ -26,6 +26,8 @@ petrochromis_project
 |   |-- analysis_input_files
 |   |   |-- dstat
 |   |   |-- fastsimcoal_inputs_manuscript
+|   |   |   |-- north_region_models
+|   |   |   `-- mid_region_models
 |   |   |-- stairway_inputs
 |   |   `-- pixy_inputs
 |   |       |-- full_species_kazumbe_subset_popfile_dir
