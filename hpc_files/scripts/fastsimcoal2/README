@@ -22,8 +22,11 @@ the down-projected SFS.
 ########################
 ### RUNNING FSC MODS ###
 ########################
--Scripts: start_fsc26_mods_NORTH.sh, start_fsc26_mods_MID.sh, run_fsc26_mod.sh, fsc_selectbestrun.sh
+-Scripts: 
+option 1: start_fsc26_mods_NORTH.sh, start_fsc26_mods_MID.sh, run_fsc26_mod.sh, fsc_selectbestrun.sh
+option 2: start_fsc26_mods_NORTH_array.sh, start_fsc26_mods_MID_array.sh, run_fsc26_mod_array.sh, process_mod_runs.sh, fsc_selectbestrun.sh
 
+=== OPTION 1 ===
 -Description: The start_fsc_mods and run_fsc26_mod scripts allow you to launch multiple models at the same time. To launch a series of 
 models, you need to specify the models that you want to run in start_fsc_mods and then submit the start_fsc_mods script, which internally
 calls run_fsc26_mod.sh (which runs each of the specified models). Within each model, the separate runs are performed sequentially, so you
@@ -58,6 +61,16 @@ version.
 5. The number of simulations per run that you want in the "number_of_sims" variable.
 NOTE: there are several other relevant parameters to consider when running fastsimcoal2, so you look at the fastsimcoal2 call to check that other details
 are specified as you want (e.g. number of cores, minimum SFS count)
+
+
+=== OPTION 2 ===
+-Description: The second option is very similar to option 1 except that each of the runs for each model are run in an embarrassingly parallel fashion
+using SLURM arrays and thus can be much faster than option 1. Running these scripts is very similar to option 1 with the same things needed to be
+specified. Option 2 conducts the model fitting and best run identification in two steps. First, the models are run using the start_fsc26_mods_array.sh
+and run_fsc26_mod_array.sh scripts (start_fsc26_mods_array.sh is the one launched on the command line). Once all models are run, the process_mod_runs.sh
+script (which internally calls fsc_selectbestrun.sh) can be used to identify the best run for each model. One consideration for running the option 2 
+scripts is the number of jobs for the array (which specifies the number of runs for each model) and whether (and to what degree) you want to the jobs to 
+be throttled. These options can be altered in the --array SLURM directive in the run_fsc26_mod_array.sh script.
 
 
 
