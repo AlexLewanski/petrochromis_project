@@ -16,7 +16,8 @@ abundance_admixture_relationship
 working_metadata_file
 PCAs
 entropy
-.DS_Store
+**/.DS_Store
 zipped_directories_zenodo
 NCBI_info
-project_scripts/.Rhistory
+**/.Rhistory
+figures/*.png
