@@ -247,7 +247,30 @@ entropy_list <- lapply(split(names(entropy_upload_list), names(entropy_upload_li
                        entropy_list = entropy_upload_list)
 
 
-k2_q_Q_list <- lapply(list(mid = 'mid', north = 'north'), function(region, entropy_results, meta_data) {
+## Get credible intervals and calculate mean
+
+# entropy_list$K_2$combined.q
+# 
+# 
+# k2_q_Q_list$north$Q$combined.Q
+# 
+# q.ci <- apply(entropy_list$K_3$combined.q, 2:3, quantile, probs = c(0.025,0.975))
+# q.ci.width <- q.ci[2,2,] - q.ci[1,2,]
+# 
+# 
+# Q.ci <- apply(allQ, 2:3, quantile, probs=c(0.025,0.975))
+# q.ci.width <- q.ci[2,2,] - q.ci[1,2,]
+# Q.ci.width <- Q.ci[2,2,] - Q.ci[1,2,]
+# 
+# mean(q.ci.width)
+
+
+#focal_var is the ancestry parameter that I will focus on --> it is the proportion of polyodon ancestry
+focal_var <- "V2"
+
+k2_q_Q_list <- lapply(list(mid = 'mid', north = 'north'), function(region, entropy_results, meta_data, focal_var) {
+  
+  col <- switch(focal_var, V1 = {1}, V2 = {2})
   
   k2_Qmod_combined.q <- abind(entropy_results[[paste0(region, '_q')]]$chain_1, entropy_results[[paste0(region, '_q')]]$chain_2, entropy_results[[paste0(region, '_q')]]$chain_3, along = 1)
   k2_Qmod_q_estimate <- as.data.frame(t(apply(k2_Qmod_combined.q, 2:3, mean)))
@@ -255,16 +278,41 @@ k2_q_Q_list <- lapply(list(mid = 'mid', north = 'north'), function(region, entro
   
   k2_combined.Q <- abind(entropy_results[[paste0(region, '_Q')]]$chain_1, entropy_results[[paste0(region, '_Q')]]$chain_2, entropy_results[[paste0(region, '_Q')]]$chain_3, along = 1)
   
+  q_ci <- apply(k2_Qmod_combined.q, 2:3, quantile, probs = c(0.025,0.975)) #95 CI% for q
+  Q_ci <- apply(k2_combined.Q, 2:3, quantile, probs = c(0.025,0.975)) #95 CI% for Q
+  
+  q_collapse <- do.call(rbind, lapply(seq(dim(q_ci)[3]), function(x) q_ci[ , col, x]))
+  
+  ci_df <- do.call(rbind, lapply(seq(dim(Q_ci)[3]), function(x) Q_ci[ , , x])) %>% 
+    as.data.frame() %>% 
+    rownames_to_column() %>%
+    mutate(Q_ci = paste0('Qci_', sub(pattern = 'X([0-9]+\\.[0-9]).*', replacement = '\\1', x = rowname)),
+           index = rep(1:(n()/2), each = 2)) %>%
+    select(!c(rowname, V1, V3) ) %>% 
+    pivot_wider(names_from = 'Q_ci', values_from = 'V2') %>%
+    cbind(., q_collapse %>%
+            as.data.frame() %>% 
+            rename(qci_2.5 = `2.5%`,
+                   qci_97.5 = `97.5%`))
+  
+  k2_Qmod_q_estimate_with_metadata_andci <- cbind(k2_Qmod_q_estimate_with_metadata, ci_df)
+  
   return(
     list(q = list(combined.q = k2_Qmod_combined.q,
                   q_estimate = k2_Qmod_q_estimate,
                   q_estimate_with_metadata = k2_Qmod_q_estimate_with_metadata,
+                  q_estimate_with_metadata_and_ci = k2_Qmod_q_estimate_with_metadata_andci,
                   q_long = k2_Qmod_q_estimate_with_metadata %>%
                     gather(key = cluster, value = proportion, c('V1', 'V2')) ),
          Q = list(combined.Q = k2_combined.Q,
                   Q_estimate = data.frame(t(apply(k2_combined.Q, 2:3, mean)))) )
   )
-}, entropy_results = k2_Q_q_upload_list, meta_data = processed_metadata)
+}, entropy_results = k2_Q_q_upload_list, meta_data = processed_metadata, focal_var = focal_var)
+
+
+
+
+# q.ci.width <- q.ci[2,2,] - q.ci[1,2,]
 
 
 #checking for evidence of label switching
@@ -296,8 +344,8 @@ label_switch <- 'no'
 
 if (label_switch == 'yes') {
   #switch the labels for V1 <-> V2 and X1 <-> X2 for the mid region to harmonize the labels between the regions
-  k2_q_Q_combined <- rbind(cbind(k2_q_Q_list$north$q$q_estimate_with_metadata, k2_q_Q_list$north$Q$Q_estimate),
-                           cbind(k2_q_Q_list$mid$q$q_estimate_with_metadata, k2_q_Q_list$mid$Q$Q_estimate) %>%
+  k2_q_Q_combined <- rbind(cbind(k2_q_Q_list$north$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$north$Q$Q_estimate),
+                           cbind(k2_q_Q_list$mid$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$mid$Q$Q_estimate) %>%
                                 mutate(V1_new = V2,
                                        V2_new = V1,
                                        X1_new = X3,
@@ -312,14 +360,15 @@ if (label_switch == 'yes') {
 
 } else {
   ## IF THERE IS NO LABEL SWITCHING, YOU CAN JUST BIND THE DATA FOR THE REGIONS TOGETHER
-  k2_q_Q_combined <- rbind(cbind(k2_q_Q_list$north$q$q_estimate_with_metadata, k2_q_Q_list$north$Q$Q_estimate),
-                           cbind(k2_q_Q_list$mid$q$q_estimate_with_metadata, k2_q_Q_list$mid$Q$Q_estimate))
+  k2_q_Q_combined <- rbind(cbind(k2_q_Q_list$north$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$north$Q$Q_estimate),
+                           cbind(k2_q_Q_list$mid$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$mid$Q$Q_estimate))
 
 }
 
 
+
 #focal_var is the ancestry parameter that I will focus on --> it is the proportion of polyodon ancestry
-focal_var <- "V2"
+#focal_var <- "V2"
 #X2 --> prop of interspecific hybridization
 #V2 --> prop of polyodon genome
 
@@ -387,9 +436,9 @@ x.grob <- textGrob("q (proportion of ancestry)",
 k2_plot_list <- list() #list to store K2 Q vs. q plots
 
 k2_plot_list[["k2_full_dataset"]] <- ggplot(data = k2_q_Q_combined, aes_string(x = focal_var, y = "X2", color = "location_plotting") ) +
-  geom_line(data = triangle_dataframe, aes(x = x, y = y), color = '#bbbaba', size = 1.5, lineend = "round") +
-  geom_point(size = 6.5, alpha = 0.5) +
-  geom_point(size = 6.5, shape = 1, alpha = 0.5) +
+  geom_line(data = triangle_dataframe, aes(x = x, y = y), color = '#e5e5e5', size = 1.5, lineend = "round") +
+  geom_point(size = 6.5, alpha = 0.4) +
+  geom_point(size = 6.5, shape = 1, alpha = 0.4) +
   scale_color_manual(name = "Location", values = location_palette_letters[names(location_palette_letters) %in% unique(k2_q_Q_combined$location_plotting) ]) +
   scale_x_continuous(breaks = seq(0, 1, 0.5), labels = c("0", "0.5", "1")) +
   scale_y_continuous(breaks = seq(0, 1, 0.5), labels = c("0", "0.5", "1")) +
@@ -412,9 +461,9 @@ for (i in unique(k2_q_Q_combined$location_plotting)) {
   
   #create plot and store in k2_plot_list in the entry "k2_i" where i is the location (e.g. k2_Hilltop)
   k2_plot_list[[paste0("k2_", gsub(" ", "_", i) )]] <- ggplot(data = location_dataframe, aes_string(x = focal_var, y = "X2", color = "location_plotting") ) +
-    geom_line(data = triangle_dataframe, aes(x = x, y = y), color = '#bbbaba', size = 1.5, lineend = "round") +
-    geom_point(size = 6.5, alpha = 0.5) +
-    geom_point(size = 6.5, shape = 1, alpha = 0.5) +
+    geom_line(data = triangle_dataframe, aes(x = x, y = y), color = '#e5e5e5', size = 1.5, lineend = "round") +
+    geom_point(size = 6.5, alpha = 0.4) +
+    geom_point(size = 6.5, shape = 1, alpha = 0.4) +
     scale_color_manual(name = "Location", values = location_palette_letters[names(location_palette_letters) %in% unique(location_dataframe$location_plotting) ]) +
     scale_x_continuous(breaks = seq(0, 1, 0.5), labels = c("0", "0.5", "1")) +
     scale_y_continuous(breaks = seq(0, 1, 0.5), labels = c("0", "0.5", "1")) +
@@ -422,7 +471,9 @@ for (i in unique(k2_q_Q_combined$location_plotting)) {
     theme_Q_entropy() +
     theme(axis.title = element_blank(),
           plot.title = element_text(hjust = 0.5, size = 24),
-          legend.position = "none")
+          legend.position = "none") +
+    geom_segment(aes(x = qci_2.5, xend = qci_97.5, y = X2, yend = X2), size = 1) +
+    geom_segment(aes(y = Qci_2.5, yend = Qci_97.5, x = V2, xend = V2), size = 1)
   
   #print message saying that the plot for location i is finished
   message(paste0("completed plot for ", i))
@@ -546,8 +597,14 @@ entropy_bar_plot_multi <- plot_grid(V2_plots$plot_list$K_2location_genetic + ggt
 plot_grid(Qq_multipanel_FULL_withbarchart_withmarg, entropy_bar_plot_multi + theme(plot.margin = unit(c(0.85, 0.7, 0.3, 0.8),"cm")), 
           labels = c("", "(d)"), label_y = c(1, 1.01), nrow = 2, label_size = 25, rel_heights = c(0.8, 0.25))
 
-ggsave2(here('figures', 'k2_Q_q_multipanel_FULL_barchart_marginal_qbarplot_9_7_2021.png'), 
-        width = 19, height = 14, bg = "white")
+#ggsave2(here('figures', 'k2_Q_q_multipanel_FULL_barchart_marginal_qbarplot_7_18_2022.png'), 
+#        width = 19, height = 14, bg = "white")
+
+ggsave2(here('figures', 'k2_Q_q_multipanel_FULL_barchart_marginal_qbarplot_7_18_2022.pdf'), 
+        device = 'pdf', width = 19, height = 14, bg = "white")
+
+# ggsave2(here('figures', 'k2_Q_q_multipanel_FULL_barchart_marginal_qbarplot_9_7_2021.png'), 
+#         width = 19, height = 14, bg = "white")
 
 
 
@@ -573,7 +630,10 @@ cowplot::plot_grid(V2_plots$plot_list$K_2location_genetic +
                      ggtitle(expression(italic('K') ~ " = 5")), nrow = 4) +
   theme(plot.margin = unit(c(0, 0, 0.25, 0), "cm"))
 
-ggsave(here('figures', 'entropy_k2through5.png'),
+#ggsave(here('figures', 'entropy_k2through5.png'),
+#       width = 12, height = 10, bg = "white")
+
+ggsave(here('figures', 'entropy_k2through5.pdf'), device = 'pdf',
        width = 12, height = 10, bg = "white")
 
 
@@ -653,8 +713,11 @@ example_trace_plot <- plot_grid(
 )
 
 example_trace_plot
-ggsave2(here('figures', 'entropy_trace_plots.png'), 
+#ggsave2(here('figures', 'entropy_trace_plots.png'), 
+#        width = 0.8*19, height = 0.8*14, bg = "white")
+ggsave2(here('figures', 'entropy_trace_plots.pdf'), device = 'pdf', 
         width = 0.8*19, height = 0.8*14, bg = "white")
+
 
 
 
@@ -1128,4 +1191,69 @@ summary_new_classify_df %>%
 # #export V2 multipanel plot
 # V2_multipanel_full
 # ggsave2("/Users/alexlewanski/Documents/University_of_Wyoming/Research/Projects/Petrochromis_Project/Cichlid_FULLDATASET/entropy/results/results_8_27_2020/plots/q_plot_multipanel_V2_8_31_2020.png", width = 21, height = 16)
+
+# 
+# mid_q_ci <- t(as.data.frame(apply(k2_q_Q_list$mid$q$combined.q, 2:3, quantile, probs = c(0.025,0.975))))
+# 
+# apply(k2_q_Q_list$mid$q$combined.q, 2:3, quantile, probs = c(0.025,0.975))
+# 
+# 
+# mid_Q12_ci <- apply(k2_q_Q_list$mid$Q$combined.Q, 2:3, quantile, probs = c(0.025,0.975))[,,14]
+# 
+# 
+# t(apply(k2_q_Q_list$mid$Q$combined.Q, 2:3, mean))
+# 
+# do.call(mid_Q12_ci, rbind)
+# 
+# 
+# do.call(rbind, lapply(seq(dim(mid_Q12_ci)[3]), function(x) mid_Q12_ci[ , , x])) %>% 
+#   as.data.frame() %>% 
+#   rownames_to_column() %>%
+#   mutate(Q_ci = paste0('Qci_', sub(pattern = 'X([0-9]+\\.[0-9]).*', replacement = '\\1', x = rowname)),
+#          index = rep(1:(n()/2), each = 2)) %>%
+#   select(!c(rowname, V1, V3) ) %>% 
+#   pivot_wider(names_from = 'Q_ci', values_from = 'V2') %>%
+#   cbind(., t(as.data.frame(mid_q_ci)) %>% 
+#           as.data.frame() %>% 
+#           rename(qci_2.5 = `2.5%`,
+#                  qci_97.5 = `97.5%`)) %>% 
+#   ggplot() +
+#   geom_segment(aes(x = qci_2.5, xend = qci_97.5, y = Qci_2.5, yend = Qci_97.5))
+# 
+# sub(pattern = 'X([0-9]+\\.[0-9]).*', replacement = '\\1', x = 'X97.5..75')
+# 
+# data.frame(t(mid_Q12_ci))
+# 
+# data.frame(mean(mid_Q12_ci[2,2,] - mid_Q12_ci[1,2,]))
+# 
+# 
+# mid_q_ci <- apply(k2_q_Q_list$mid$q$combined.q, 2:3, quantile, probs = c(0.025,0.975))
+# 
+# mean(mid_q_ci[2,2,] - mid_q_ci[1,2,])
+
+
+# rbind(cbind(k2_q_Q_list$north$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$north$Q$Q_estimate),
+#       cbind(k2_q_Q_list$mid$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$mid$Q$Q_estimate)) %>% 
+#   ggplot(aes_string(x = focal_var, y = "X2", color = "location_plotting") ) +
+#   geom_line(data = triangle_dataframe, aes(x = x, y = y), color = '#bbbaba', size = 1.5, lineend = "round") +
+#   geom_point(size = 6.5, alpha = 0.4) +
+#   geom_point(size = 6.5, shape = 1, alpha = 0.4) +
+#   scale_color_manual(name = "Location", values = location_palette_letters[names(location_palette_letters) %in% unique(k2_q_Q_combined$location_plotting) ]) +
+#   scale_x_continuous(breaks = seq(0, 1, 0.5), labels = c("0", "0.5", "1")) +
+#   scale_y_continuous(breaks = seq(0, 1, 0.5), labels = c("0", "0.5", "1")) +
+#   xlab("q (proportion of ancestry)") +
+#   ylab(expression(Q[12]~"(interspecific ancestry)") ) +
+#   theme_Q_entropy_alt() +
+#   theme(plot.title = element_text(hjust = 0.5, size = 16),
+#         axis.title = element_text(size = 20, face = "plain"),
+#         axis.text = element_text(size = 16),
+#         plot.margin=unit(c(5, 1.5, 1, 2),"mm"),
+#         legend.position = 'none') +
+#   geom_segment(data = rbind(cbind(k2_q_Q_list$north$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$north$Q$Q_estimate),
+#                             cbind(k2_q_Q_list$mid$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$mid$Q$Q_estimate)),
+#                aes(x = qci_2.5, xend = qci_97.5, y = X2, yend = X2), size = 1) +
+#   geom_segment(data = rbind(cbind(k2_q_Q_list$north$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$north$Q$Q_estimate),
+#                             cbind(k2_q_Q_list$mid$q$q_estimate_with_metadata_and_ci, k2_q_Q_list$mid$Q$Q_estimate)),
+#                aes(y = Qci_2.5, yend = Qci_97.5, x = V2, xend = V2), size = 1)
+# 
 

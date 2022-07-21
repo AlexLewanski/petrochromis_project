@@ -672,8 +672,10 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typeb, empty_plot, nrow = 3, rel
           ncol = 3, rel_widths = c(0.25, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
-ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_diagramma_9_19_2021_REARRANGE.png'), 
-        width = 19*1.1, height = 8*1.1, bg = 'white')
+#ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_diagramma_9_19_2021_REARRANGE.png'), 
+#        width = 19*1.1, height = 8*1.1, bg = 'white')
+ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_diagramma_9_19_2021_REARRANGE.pdf'), 
+        width = 19*1.1, height = 8*1.1, bg = 'white', device = 'pdf')
 
 
 #type a with P. green outgroup
@@ -684,8 +686,10 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typeb, empty_plot, nrow = 3, rel
           ncol = 3, rel_widths = c(0.25, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
-ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_green_9_19_2021_REARRANGE.png'), 
-        width = 19*1.1, height = 8*1.1, bg = 'white')
+#ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_green_9_19_2021_REARRANGE.png'), 
+#        width = 19*1.1, height = 8*1.1, bg = 'white')
+ggsave2(here('figures', 'dstat_matrix_plot_typea_outgroup_green_9_19_2021_REARRANGE.pdf'), 
+        width = 19*1.1, height = 8*1.1, bg = 'white', device = 'pdf')
 
 
 #type b with S. diagramma outgroup
@@ -696,8 +700,10 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel
           ncol = 3, rel_widths = c(0.25, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
-ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE.png'), 
-        width = 19*1.1, height = 8*1.1, bg = 'white')
+#ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE.png'), 
+#        width = 19*1.1, height = 8*1.1, bg = 'white')
+ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE.pdf'), 
+        width = 19*1.1, height = 8*1.1, bg = 'white', device = 'pdf')
   
 
 #type a with P. green outgroup
@@ -708,8 +714,10 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel
           ncol = 3, rel_widths = c(0.25, 0.8, 0.14), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
-ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE.png'), 
-        width = 19*1.1, height = 8*1.1, bg = 'white')
+#ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE.png'), 
+#        width = 19*1.1, height = 8*1.1, bg = 'white')
+ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE.pdf'), 
+        width = 19*1.1, height = 8*1.1, bg = 'white', device = 'pdf')
 
 
 
@@ -1334,8 +1342,10 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel
           ncol = 3, rel_widths = c(0.25, 0.79, 0.23), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
-ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE_RANDOM.png'), 
-        width = 19*1.15, height = 8*1.15, bg = 'white')
+#ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE_RANDOM.png'), 
+#        width = 19*1.15, height = 8*1.15, bg = 'white')
+ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_diagramma_9_19_2021_REARRANGE_RANDOM.pdf'), 
+        width = 19*1.15, height = 8*1.15, bg = 'white', device = 'pdf')
 
 
 plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel_heights = c(0.08, 0.8, 0.08)), 
@@ -1345,8 +1355,10 @@ plot_grid(plot_grid(empty_plot, tree_multipanel_typea, empty_plot, nrow = 3, rel
           ncol = 3, rel_widths = c(0.25, 0.79, 0.23), labels = c("(a)", "", ""), label_size = 26, vjust = 1) +
   theme(plot.margin = margin(4, 0, 0, 0))
 
-ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE_RANDOM.png'), 
-        width = 19*1.15, height = 8*1.15, bg = 'white')
+#ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE_RANDOM.png'), 
+#        width = 19*1.15, height = 8*1.15, bg = 'white')
+ggsave2(here('figures', 'dstat_matrix_plot_typeb_outgroup_green_9_19_2021_REARRANGE_RANDOM.pdf'), 
+        width = 19*1.15, height = 8*1.15, bg = 'white', device = 'pdf')
 
 
 

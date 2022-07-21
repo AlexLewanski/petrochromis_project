@@ -417,7 +417,9 @@ plot_grid(plot_grid(gam_kazumbe_plot, gam_polyodon_plot, poly_kaz_abundance_plot
           nrow = 2, rel_heights = c(1, 0.1))
 
 #saving multipanel figure
-ggsave2(here('figures', 'abundance_admixture_gam_9_8_2021.png'), width = 18, height = 6.5, bg = "white")
+#ggsave2(here('figures', 'abundance_admixture_gam_9_8_2021.png'), width = 18, height = 6.5, bg = "white")
+ggsave2(here('figures', 'abundance_admixture_gam_9_8_2021.pdf'), 
+        width = 18, height = 6.5, bg = "white", device = 'pdf')
 
 
 
@@ -427,13 +429,16 @@ ggsave2(here('figures', 'abundance_admixture_gam_9_8_2021.png'), width = 18, hei
 polyodon_mod_fit <- cowplot::plot_grid(qq_plot(v1_polyodondens_gam_beta) + theme_bw(), residuals_linpred_plot(v1_polyodondens_gam_beta) + theme_bw(),
                                        residuals_hist_plot(v1_polyodondens_gam_beta) + theme_bw(), observed_fitted_plot(v1_polyodondens_gam_beta) + theme_bw(), 
                                        nrow = 2)
-ggsave2(here('figures', 'polyodon_gam_mod_fit_9_8_2021.png'), width = 14, height = 10, bg = "white")
-
+#ggsave2(here('figures', 'polyodon_gam_mod_fit_9_8_2021.png'), width = 14, height = 10, bg = "white")
+ggsave2(here('figures', 'polyodon_gam_mod_fit_9_8_2021.pdf'), 
+        width = 14, height = 10, bg = "white", device = 'pdf')
 
 kazumbe_mod_fit <- cowplot::plot_grid(qq_plot(v1_kazumbedens_gam_beta) + theme_bw(), residuals_linpred_plot(v1_kazumbedens_gam_beta) + theme_bw(),
                                       residuals_hist_plot(v1_kazumbedens_gam_beta) + theme_bw(), observed_fitted_plot(v1_kazumbedens_gam_beta) + theme_bw(), nrow = 2)
 
-ggsave2(here('figures', 'kazumbe_gam_mod_fit_9_8_2021.png'), width = 14, height = 10, bg = "white")
+#ggsave2(here('figures', 'kazumbe_gam_mod_fit_9_8_2021.png'), width = 14, height = 10, bg = "white")
+ggsave2(here('figures', 'kazumbe_gam_mod_fit_9_8_2021.pdf'), 
+        width = 14, height = 10, bg = "white", device = 'pdf')
 
 
 

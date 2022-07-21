@@ -242,7 +242,9 @@ plot_grid(species_popvae_plot + theme(plot.margin = unit(c(0.75, 0.5, 0, 0.75), 
           rel_widths = c(0.6, 0.4), labels = c('(a)', ''), label_size = 26.5)
 
 #Export the final plot
-ggsave2(here('figures', 'petro_multipanelpopvae_9_7_2021.png'), width = 22, height = 12, bg = "white")
+#ggsave2(here('figures', 'petro_multipanelpopvae_9_7_2021.png'), width = 22, height = 12, bg = "white")
+ggsave2(here('figures', 'petro_multipanelpopvae_9_7_2021.pdf'), 
+        width = 22, height = 12, bg = "white", device = 'pdf')
 
 
 

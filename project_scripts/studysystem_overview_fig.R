@@ -522,9 +522,12 @@ multipanel_diversity_bottomrow <- plot_grid(fish_multipanel, pca_multipanel, plo
 plot_grid(multipanel_diversity_toprow,
           multipanel_diversity_bottomrow, nrow = 2, rel_heights = c(0.7, 0.3))
 
-ggsave(here('figures', 'prac_full_multipanel_5_12_2021.png'),
-        width = 19, height = 17, bg = 'white')
-#width = 19, height = 16, bg = 'white')
+#ggsave(here('figures', 'prac_full_multipanel_5_12_2021.png'),
+#        width = 19, height = 17, bg = 'white')
+
+#cairo_pdf device because of the special symbols (pi) included in the plot
+ggsave(here('figures', 'study_overview_figure.pdf'),
+       width = 19, height = 17, bg = 'white', device = cairo_pdf)
 
 
 

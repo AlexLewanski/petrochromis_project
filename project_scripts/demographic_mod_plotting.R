@@ -579,8 +579,12 @@ cowplot::plot_grid(multipanel1, tree_legend, ncol = 2, rel_widths = c(0.92, 0.08
 # ggsave(here('figures', 'fastsimcoal_mod_results_pluslegend_9_30_2021.png'), 
 #        width = 2.25*18, height = 2.25*10.5, units = "cm", bg = "white")
 
-ggsave(here('figures', 'fastsimcoal_mod_results_pluslegend_3_31_2022.png'), 
-       width = 2.25*18, height = 2.25*10.5, units = "cm", bg = "white")
+#ggsave(here('figures', 'fastsimcoal_mod_results_pluslegend_3_31_2022.png'), 
+#       width = 2.25*18, height = 2.25*10.5, units = "cm", bg = "white")
+
+#cairo_pdf used because of special symbol (delta) used in the figure
+ggsave(here('figures', 'fastsimcoal_mod_results_pluslegend_3_31_2022.pdf'), 
+       width = 2.25*18, height = 2.25*10.5, units = "cm", bg = "white", device = cairo_pdf)
 
 
 
@@ -789,11 +793,11 @@ plot_list_migmatcolor_withpadding <- lapply(plot_list_migmatcolor, function(x) {
 })
 
 
-prac_multipanel <- plot_grid(plot_list_migmatcolor_withpadding$`Continuous gene flow`$Symmetric, plot_list_migmatcolor_withpadding$`Early gene flow`$Symmetric, plot_list_migmatcolor_withpadding$`Recent gene flow`$Symmetric,
-          plot_list_migmatcolor_withpadding$`Continuous gene flow`$Asymmetric, plot_list_migmatcolor_withpadding$`Early gene flow`$Asymmetric, plot_list_migmatcolor_withpadding$`Recent gene flow`$Asymmetric,
-          plot_list_migmatcolor_withpadding$`Continuous gene flow`$`Unidirect (Pk to Pp)`, plot_list_migmatcolor_withpadding$`Early gene flow`$`Unidirect (Pk to Pp)`, plot_list_migmatcolor_withpadding$`Recent gene flow`$`Unidirect (Pk to Pp)`,
-          plot_list_migmatcolor_withpadding$`Continuous gene flow`$`Unidirect (Pp to Pk)`, plot_list_migmatcolor_withpadding$`Early gene flow`$`Unidirect (Pp to Pk)`, plot_list_migmatcolor_withpadding$`Recent gene flow`$`Unidirect (Pp to Pk)`,
-          nrow = 4, labels = paste0('(', letters[1:12], ')') )
+#prac_multipanel <- plot_grid(plot_list_migmatcolor_withpadding$`Continuous gene flow`$Symmetric, plot_list_migmatcolor_withpadding$`Early gene flow`$Symmetric, plot_list_migmatcolor_withpadding$`Recent gene flow`$Symmetric,
+#          plot_list_migmatcolor_withpadding$`Continuous gene flow`$Asymmetric, plot_list_migmatcolor_withpadding$`Early gene flow`$Asymmetric, plot_list_migmatcolor_withpadding$`Recent gene flow`$Asymmetric,
+#          plot_list_migmatcolor_withpadding$`Continuous gene flow`$`Unidirect (Pk to Pp)`, plot_list_migmatcolor_withpadding$`Early gene flow`$`Unidirect (Pk to Pp)`, plot_list_migmatcolor_withpadding$`Recent gene flow`$`Unidirect (Pk to Pp)`,
+#          plot_list_migmatcolor_withpadding$`Continuous gene flow`$`Unidirect (Pp to Pk)`, plot_list_migmatcolor_withpadding$`Early gene flow`$`Unidirect (Pp to Pk)`, plot_list_migmatcolor_withpadding$`Recent gene flow`$`Unidirect (Pp to Pk)`,
+#          nrow = 4, labels = paste0('(', letters[1:12], ')') )
 
 gf_timing_legend <- get_legend(
   data.frame(x = c(1, 2, 3), 
@@ -882,8 +886,11 @@ plot_grid(symmetric_plot,
           gf_timing_legend_multipanel, nrow = 5, rel_heights = c(100, 100, 100, 100, 20)) +
   theme(plot.margin = unit(c(0, 0, 0, 0.23), "cm"))
 
-ggsave(here('figures', 'fastsimcoal_allmods_testcolor.png'), 
-       width = 1.2*20, height = 1.2*16.5, units = "cm", bg = "white")
+#ggsave(here('figures', 'fastsimcoal_allmods_testcolor.png'), 
+#       width = 1.2*20, height = 1.2*16.5, units = "cm", bg = "white")
+
+ggsave(here('figures', 'fastsimcoal_allmods_testcolor.pdf'), 
+       width = 1.2*20, height = 1.2*16.5, units = "cm", bg = "white", device = 'pdf')
 
 
 
@@ -1071,20 +1078,29 @@ plot_sfs_fits <- lapply(setNames(nm = c('north', 'mid')), function(REGION, sfs_l
 
 
 plot_sfs_fits$north$twod_sfs
-ggsave(here('figures', 'fsc_north_region_topmod_2dsfs.png'), 
-       width = 1.5*18, height = 1.5*5.5, units = "cm", bg = "white")
+#ggsave(here('figures', 'fsc_north_region_topmod_2dsfs.png'), 
+#       width = 1.5*18, height = 1.5*5.5, units = "cm", bg = "white")
+ggsave(here('figures', 'fsc_north_region_topmod_2dsfs.pdf'), 
+       width = 1.5*18, height = 1.5*5.5, units = "cm", bg = "white", device = 'pdf')
 
 plot_sfs_fits$north$oned_sfs
-ggsave(here('figures', 'fsc_north_region_topmod_1dsfs.png'), 
-       width = 1.5*16, height = 1.5*7, units = "cm", bg = "white")
+#ggsave(here('figures', 'fsc_north_region_topmod_1dsfs.png'), 
+#       width = 1.5*16, height = 1.5*7, units = "cm", bg = "white")
+ggsave(here('figures', 'fsc_north_region_topmod_1dsfs.pdf'), 
+       width = 1.5*16, height = 1.5*7, units = "cm", bg = "white", device = 'pdf')
+
 
 plot_sfs_fits$mid$twod_sfs
-ggsave(here('figures', 'fsc_mid_region_topmod_2dsfs.png'), 
-       width = 1.5*18, height = 1.5*5.5, units = "cm", bg = "white")
+#ggsave(here('figures', 'fsc_mid_region_topmod_2dsfs.png'), 
+#       width = 1.5*18, height = 1.5*5.5, units = "cm", bg = "white")
+ggsave(here('figures', 'fsc_mid_region_topmod_2dsfs.pdf'), 
+       width = 1.5*18, height = 1.5*5.5, units = "cm", bg = "white", device = 'pdf')
 
 plot_sfs_fits$mid$oned_sfs
-ggsave(here('figures', 'fsc_mid_region_topmod_1dsfs.png'), 
-       width = 1.5*16, height = 1.5*7, units = "cm", bg = "white")
+#ggsave(here('figures', 'fsc_mid_region_topmod_1dsfs.png'), 
+#       width = 1.5*16, height = 1.5*7, units = "cm", bg = "white")
+ggsave(here('figures', 'fsc_mid_region_topmod_1dsfs.pdf'), 
+       width = 1.5*16, height = 1.5*7, units = "cm", bg = "white", device = 'pdf')
 
 
 

@@ -11,7 +11,7 @@
 ###                                    populations and between all pairs of polyodon populations
 ###     intraspecific_fst.png: visualization of the intraspecific Fst estimates, which is included
 ###                            in the supplementary material
-###     pi_7_2021.csv: file of spiecies-specific nucleotide diversity (pi) estimates and 95% CIs 
+###     pi_7_2021.csv: file of speicies-specific nucleotide diversity (pi) estimates and 95% CIs 
 ###                    for kazumbe and polyodon, which were calculated based on all samples for 
 ###                    each species and for the samples from each species collected from each 
 ###                    sampling location (i.e. population)
@@ -330,8 +330,10 @@ intraspecific_fst_df %>%
   theme(strip.text.x = element_text(size = 15),
         axis.title = element_text(size = 15))
 
-ggsave(here('figures', 'intraspecific_fst.png'), 
-       width = 14, height = 7, bg = "white")
+#ggsave(here('figures', 'intraspecific_fst.png'), 
+#       width = 14, height = 7, bg = "white")
+ggsave(here('figures', 'intraspecific_fst.pdf'), 
+       width = 14, height = 7, bg = "white", device = 'pdf')
 
 
 ##EXPLORATORY VIOLIN PLOT FIGURE SHOWING JUMPS IN FST BETWEEN SAMPLING REGIONS
@@ -536,9 +538,12 @@ dxy_info_processed <- dxy_info %>%
   mutate(dxy = paste0(round(mean, 4), " (", round(lower, 4), ", ", round(upper, 4), ")")) %>%
   select(dxy, Population)
 
+#7/15/2022: order rows so that locations are N --> S (alphabetical order)
 popgen_stats <- left_join(Fst_dataframe_updated_processed, dxy_info_processed, by = "Population") %>% 
   left_join(., pi_info_processed, by = "Population") %>% 
   relocate(Population, Fst, dxy, kazumbe, polyodon) %>% 
+  mutate(Population = factor(Population, levels = (c(LETTERS[1:10], 'Full') )) ) %>% 
+  arrange(Population) %>% 
   rename("P. sp. 'kazumbe'" = kazumbe,
          "P. cf. polyodon" = polyodon)
 
@@ -680,8 +685,6 @@ pi_bootstrap_full_list <- bind_rows(pi_bootstrap_full_list)
 
 write.csv(pi_bootstrap_full_list, 
           here('diversity_divergence_stats', 'processed_results', 'pi_kazumbe_subsample.csv'), row.names = FALSE)
-
-
 
 
 

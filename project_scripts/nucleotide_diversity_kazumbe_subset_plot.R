@@ -1,3 +1,14 @@
+##############################################################################################
+### SCRIPT NAME: nucleotide_diversity_kazumbe_subset_plot.R
+### PURPOSE: visualizing the nucleotide diversity estimates calculated on subset of kazumbe
+### PRODUCTS:
+###     pnucleotide_diversity_with_kazumbe_subset.pdf: figure of nucleotide estimates
+##############################################################################################
+
+
+#####################
+### SCRIPT SET-UP ###
+#####################
 library(here)
 library(tidyverse)
 library(cowplot)
@@ -38,6 +49,19 @@ div_with_kazumbe_subset_plot <- ggplot(data = pi_df_combined %>%
         legend.spacing.x = unit(0.2, 'cm'),
         legend.text = element_text(size = 13, margin = margin(r = 6, unit = "pt")))
 
-ggsave(filename = here('figures', 'nucleotide_diversity_with_kazumbe_subset.png'),
-       plot = div_with_kazumbe_subset_plot, 
+#ggsave(filename = here('figures', 'nucleotide_diversity_with_kazumbe_subset.png'),
+#       plot = div_with_kazumbe_subset_plot, 
+#       width = 12, height = 7, bg = 'white')
+
+#pdf does not like the pi symbol; it gives the following warning and prints out dots:
+#18: In grid.Call.graphics(C_text, as.graphicsAnnot(x$label),  ... :
+#                            conversion failure on 'π' in 'mbcsToSbcs': dot substituted for <80>
+#https://stackoverflow.com/questions/63985427/warning-in-grid-callc-textbounds-as-graphicsannotxlabel-xx-xy
+#to fix, use cairo_pdf as the graphics device:
+#https://github.com/wilkelab/cowplot/issues/174
+#https://github.com/rstudio/rstudio/issues/3680
+#https://stackoverflow.com/questions/61476002/cannot-save-ggplot-with-umlauts-in-expressions-with-cairo-pdf
+
+ggsave2(filename = here('figures', 'nucleotide_diversity_with_kazumbe_subset.pdf'),
+       plot = div_with_kazumbe_subset_plot, device = cairo_pdf,
        width = 12, height = 7, bg = 'white')

@@ -87,6 +87,9 @@ plot_grid(stairplot_plots_list$north_region_kazumbe, stairplot_plots_list$north_
           stairplot_plots_list$mid_region_kazumbe, stairplot_plots_list$mid_region_polyodon,
           nrow = 2)
 
-ggsave2(here('figures', 'stairway_plot_results_9_20_2021.png'), 
+#ggsave2(here('figures', 'stairway_plot_results_9_20_2021.png'), 
+#        width = 16, height = 10, bg = 'white')
+
+ggsave2(here('figures', 'stairway_plot_results_9_20_2021.pdf'), device = 'pdf', 
         width = 16, height = 10, bg = 'white')
 
