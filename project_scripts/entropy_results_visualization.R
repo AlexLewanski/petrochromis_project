@@ -601,7 +601,7 @@ plot_grid(Qq_multipanel_FULL_withbarchart_withmarg, entropy_bar_plot_multi + the
 #        width = 19, height = 14, bg = "white")
 
 ggsave2(here('figures', 'k2_Q_q_multipanel_FULL_barchart_marginal_qbarplot_7_18_2022.pdf'), 
-        device = 'pdf', width = 19, height = 14, bg = "white")
+        device = 'pdf', width = 19, height = 14, bg = "white", dpi = 1000)
 
 # ggsave2(here('figures', 'k2_Q_q_multipanel_FULL_barchart_marginal_qbarplot_9_7_2021.png'), 
 #         width = 19, height = 14, bg = "white")
@@ -634,7 +634,7 @@ cowplot::plot_grid(V2_plots$plot_list$K_2location_genetic +
 #       width = 12, height = 10, bg = "white")
 
 ggsave(here('figures', 'entropy_k2through5.pdf'), device = 'pdf',
-       width = 12, height = 10, bg = "white")
+       width = 12, height = 10, bg = "white", dpi = 1000)
 
 
 

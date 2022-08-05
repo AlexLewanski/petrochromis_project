@@ -13,10 +13,10 @@
 
 Name| Contact
 :-----:|:-----
-Alex Lewanski|[allewanski@gmail.com](mailto:allewanski@gmail.com)
+Alex Lewanski|[allewanski AT gmail DOT com](mailto:allewanski@gmail.com)
 
 ## Overview
-This `petrochromis_project` repo is associated with the following manuscript of the same title. Further details will be added upon acceptance of the manuscript. This repo contains the main scripts associated with data processing, analysis, and visualization, and the figures and tables found in the main text and supplementary table of the manuscript. Questions about the specific content of the this repo and/or the analysis details should be directed to Alex Lewanski (see [Author](#author) section). Higher level questions regarding this project can either be directed to Alex Lewanski or [Dr. Catherine Wagner](https://cewagnerlab.com) (catherine.wagner AT uwyo DOT edu), the senior author on this project.
+This `petrochromis_project` repo is associated with the following manuscript: "Variable hybridization between two Lake Tanganyikan cichlid species in recent secondary contact" [https://doi.org/10.1111/mec.16636](https://doi.org/10.1111/mec.16636). This repo contains the main scripts associated with data processing, analysis, and visualization, and the figures and tables found in the main text and supplementary table of the manuscript. Questions about the specific content of the this repo and/or the analysis details should be directed to Alex Lewanski (see [Author](#author) section). Higher level questions regarding this project can either be directed to Alex Lewanski or [Dr. Catherine Wagner](https://cewagnerlab.com) (catherine.wagner AT uwyo DOT edu), the senior author on this project.
 
 ## Contents
 ```
